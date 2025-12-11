@@ -113,14 +113,15 @@ export default function ToolPage({ title, description, endpoint, accept, icon: I
                                     </h3>
                                     <p className="text-gray-500 mb-10">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                                     <button onClick={handleSubmit} className="btn-primary mb-4">
-                                        {/* Dynamic Button Text */}
+                                        {/* Dynamic Button Text based on Title */}
                                         {
-                                            endpoint.includes('pdf-to-word') ? 'Convert to Word' :
-                                                endpoint.includes('pdf-to-excel') ? 'Convert to Excel' :
-                                                    endpoint.includes('pdf-to-powerpoint') ? 'Convert to PowerPoint' :
-                                                        endpoint.includes('pdf-to-jpg') ? 'Convert to JPG' :
-                                                            endpoint.includes('/to-') ? 'Convert File' :
-                                                                'Convert to PDF'
+                                            title.startsWith('PDF to') ? `Convert to ${title.replace('PDF to ', '')}` :
+                                                title.startsWith('Edit') ? 'Edit PDF' :
+                                                    title.startsWith('Watermark') ? 'Add Watermark' :
+                                                        title.startsWith('Rotate') ? 'Rotate PDF' :
+                                                            title.startsWith('Crop') ? 'Crop PDF' :
+                                                                title.startsWith('Page') ? 'Add Numbers' :
+                                                                    'Convert to PDF'
                                         }
                                     </button>
                                     <button onClick={() => setFile(null)} className="block mx-auto text-gray-400 hover:text-gray-600 font-medium transition-colors text-sm">
@@ -157,7 +158,7 @@ export default function ToolPage({ title, description, endpoint, accept, icon: I
                                         // Dynamic Filename Extension
                                         endpoint.includes('pdf-to-word') ? `${file.name.split('.')[0]}.docx` :
                                             endpoint.includes('pdf-to-excel') ? `${file.name.split('.')[0]}.xlsx` :
-                                                endpoint.includes('pdf-to-powerpoint') ? `${file.name.split('.')[0]}.pptx` :
+                                                (endpoint.includes('pdf-to-powerpoint') || endpoint.includes('pdf-to-ppt')) ? `${file.name.split('.')[0]}.pptx` :
                                                     endpoint.includes('pdf-to-jpg') ? `${file.name.split('.')[0]}.jpg` :
                                                         `${file.name.split('.')[0]}.pdf`
                                     }
