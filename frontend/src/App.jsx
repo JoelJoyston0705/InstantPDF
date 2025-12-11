@@ -9,6 +9,7 @@ import BatchUpload from './components/BatchUpload';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
 import WatermarkPdfPage from './components/WatermarkPdfPage';
+import RotatePdfPage from './components/RotatePdfPage';
 
 function Home() {
   const tools = [
@@ -361,15 +362,7 @@ function App() {
           />
           <Route
             path="/rotate-pdf"
-            element={
-              <ToolPage
-                title="Rotate PDF"
-                description="Rotate your PDF pages to the correct orientation."
-                endpoint="/edit/rotate-pdf"
-                accept=".pdf"
-                icon={RotateCw}
-              />
-            }
+            element={<RotatePdfPage />}
           />
           <Route
             path="/page-numbers"
