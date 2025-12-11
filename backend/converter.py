@@ -262,21 +262,19 @@ def convert_html_to_pdf(input_path: str, output_path: str):
         return
 
     try:
-        # Fallback: Use xhtml2pdf (supports HTML/CSS much better than ReportLab directly)
-        from xhtml2pdf import pisa
+        # Fallback: Use WeasyPrint (modern, reliable HTML/CSS support)
+        from weasyprint import HTML, CSS
         
-        with open(input_path, "r", encoding='utf-8') as source_file:
-            with open(output_path, "wb") as output_file:
-                pisa_status = pisa.CreatePDF(
-                    source_file,
-                    dest=output_file
-                )
+        # WeasyPrint needs a base_url so it can find images/css if relative
+        # Since we just have a single HTML file here, we point it to the file's dir
+        base = os.path.dirname(input_path)
         
-        if pisa_status.err:
-             raise RuntimeError(f"HTML conversion error: {pisa_status.err}")
-
+        doc = HTML(filename=input_path, base_url=base)
+        doc.write_pdf(output_path)
+        
     except ImportError:
-         # Double Fallback: Simple text extraction if xhtml2pdf is missing
+         print("WeasyPrint not found, falling back to basic conversion.")
+         # Double Fallback: Simple text extraction if WeasyPrint is missing
          try:
             from reportlab.platypus import SimpleDocTemplate, Paragraph
             from reportlab.lib.styles import getSampleStyleSheet

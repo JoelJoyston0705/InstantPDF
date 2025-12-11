@@ -17,4 +17,4 @@ pdfplumber
 pdf2image
 pypdf2
 PyMuPDF
-xhtml2pdf
+weasyprint
