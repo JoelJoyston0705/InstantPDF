@@ -49,7 +49,8 @@ export default function ToolPage({ title, description, endpoint, accept, icon: I
         try {
             // Use Env Var OR fallback to Railway Production URL (Safety Net)
             const API_URL = import.meta.env.VITE_API_URL || 'https://instantpdf-production.up.railway.app';
-            const response = await fetch(`${API_URL}${endpoint}`, {
+            // Cache Busted URL
+            const response = await fetch(`${API_URL}${endpoint}?t=${Date.now()}`, {
                 method: 'POST',
                 body: formData,
             });
@@ -65,8 +66,19 @@ export default function ToolPage({ title, description, endpoint, accept, icon: I
             setStatus('done');
             setShowConfetti(true); // 🎉 Trigger confetti!
         } catch (err) {
-            console.error(err);
-            setError(err.message);
+            console.error("ToolPage Error:", err);
+
+            // Auto-heal: If it's a network/SW error, kill the Service Worker
+            if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(registrations => {
+                        for (let registration of registrations) { registration.unregister(); }
+                    });
+                    console.log("Attempted to unregister SW from ToolPage.");
+                }
+            }
+
+            setError(err.message === 'Failed to fetch' ? "Network error. Please try again." : err.message);
             setStatus('error');
         }
     };

@@ -58,7 +58,8 @@ export default function EditPdfPage() {
 
         try {
             const API_URL = import.meta.env.VITE_API_URL || 'https://instantpdf-production.up.railway.app';
-            const response = await fetch(`${API_URL}/edit/add-text-pdf`, {
+            // Add timestamp to bypass Service Worker cache
+            const response = await fetch(`${API_URL}/edit/add-text-pdf?t=${Date.now()}`, {
                 method: 'POST',
                 body: formData,
             });
@@ -74,8 +75,19 @@ export default function EditPdfPage() {
             setStatus('done');
             setShowConfetti(true);
         } catch (err) {
-            console.error(err);
-            setError(err.message);
+            console.error("Conversion Error:", err);
+
+            // Auto-heal: If it's a network/SW error, kill the Service Worker
+            if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(registrations => {
+                        for (let registration of registrations) { registration.unregister(); }
+                    });
+                    console.log("Attempted to unregister SW due to network error.");
+                }
+            }
+
+            setError(err.message === 'Failed to fetch' ? "Network error. Please try again." : err.message);
             setStatus('error');
         }
     };
