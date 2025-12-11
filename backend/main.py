@@ -478,7 +478,7 @@ async def crop_pdf_endpoint(background_tasks: BackgroundTasks, file: UploadFile 
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/edit/add-text-pdf")
-async def add_text_pdf_endpoint(background_tasks: BackgroundTasks, file: UploadFile = File(...), text: str = "Added Text"):
+async def add_text_pdf_endpoint(background_tasks: BackgroundTasks, file: UploadFile = File(...), text: str = "Added Text", x: int = 100, y: int = 100):
     if not file.filename.lower().endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Invalid file type. Please upload a .pdf file.")
     
@@ -492,7 +492,7 @@ async def add_text_pdf_endpoint(background_tasks: BackgroundTasks, file: UploadF
             shutil.copyfileobj(file.file, buffer)
         
         from pdf_editor import edit_pdf_add_text
-        edit_pdf_add_text(input_path, output_path, text)
+        edit_pdf_add_text(input_path, output_path, text, x, y)
         
         background_tasks.add_task(cleanup_files, [input_path, output_path])
         

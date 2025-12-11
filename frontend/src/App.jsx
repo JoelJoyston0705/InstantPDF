@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { FileText, FileSpreadsheet, Image as ImageIcon, Heart, Shield, Zap, Presentation, Code, ArrowRight, RotateCw, Type, Hash, Crop, Edit3 } from 'lucide-react';
 import Navbar from './components/Navbar';
 import ToolPage from './components/ToolPage';
+import EditPdfPage from './components/EditPdfPage';
 import CookieConsent from './components/CookieConsent';
 import BatchUpload from './components/BatchUpload';
 import PrivacyPolicy from './components/PrivacyPolicy';
@@ -360,15 +361,7 @@ function App() {
           />
           <Route
             path="/edit-pdf"
-            element={
-              <ToolPage
-                title="Edit PDF"
-                description="Add text, images, and annotations to your PDFs."
-                endpoint="/edit/add-text-pdf"
-                accept=".pdf"
-                icon={Edit3}
-              />
-            }
+            element={<EditPdfPage />}
           />
           <Route
             path="/watermark-pdf"
