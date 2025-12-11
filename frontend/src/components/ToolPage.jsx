@@ -113,7 +113,8 @@ export default function ToolPage({ title, description, endpoint, accept, icon: I
                                     </h3>
                                     <p className="text-gray-500 mb-10">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                                     <button onClick={handleSubmit} className="btn-primary mb-4">
-                                        Convert to PDF
+                                        {/* Dynamic Button Text */}
+                                        {endpoint.includes('/to-') ? 'Convert File' : 'Convert to PDF'}
                                     </button>
                                     <button onClick={() => setFile(null)} className="block mx-auto text-gray-400 hover:text-gray-600 font-medium transition-colors text-sm">
                                         Remove file
@@ -141,14 +142,21 @@ export default function ToolPage({ title, description, endpoint, accept, icon: I
                             <h3 className="text-3xl font-semibold mb-3" style={{ letterSpacing: '-0.022em' }}>
                                 All Done!
                             </h3>
-                            <p className="text-gray-500 mb-10">Your PDF is ready to download.</p>
+                            <p className="text-gray-500 mb-10">Your file is ready to download.</p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
                                 <a
                                     href={downloadUrl}
-                                    download={`${file.name.split('.')[0]}.pdf`}
+                                    download={
+                                        // Dynamic Filename Extension
+                                        endpoint.includes('pdf-to-word') ? `${file.name.split('.')[0]}.docx` :
+                                            endpoint.includes('pdf-to-excel') ? `${file.name.split('.')[0]}.xlsx` :
+                                                endpoint.includes('pdf-to-powerpoint') ? `${file.name.split('.')[0]}.pptx` :
+                                                    endpoint.includes('pdf-to-jpg') ? `${file.name.split('.')[0]}.jpg` :
+                                                        `${file.name.split('.')[0]}.pdf`
+                                    }
                                     className="btn-primary inline-flex items-center justify-center gap-2"
                                 >
-                                    <Download size={20} /> Download PDF
+                                    <Download size={20} /> Download
                                 </a>
                                 <button
                                     onClick={() => { setFile(null); setStatus('idle'); }}
