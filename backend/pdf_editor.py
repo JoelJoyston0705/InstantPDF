@@ -103,44 +103,95 @@ def crop_pdf(input_path: str, output_path: str, margin: int = 50):
         raise RuntimeError(f"PDF cropping failed: {e}")
 
 def edit_pdf_add_text(input_path: str, output_path: str, text: str = "Added Text", x: int = 100, y: int = 100):
-    """Add text to PDF at specified position using pikepdf and ReportLab (Robust)"""
+    """Add text to PDF at specified position using multiple strategies for robustness"""
+    
+    # Strategy 1: pikepdf (Best for repair and quality)
     try:
         import pikepdf
         from io import BytesIO
         from reportlab.pdfgen import canvas
         
-        # Open with pikepdf (it automatically repairs many issues)
         pdf = pikepdf.Pdf.open(input_path, allow_overwriting_input=True)
-        
-        # Get first page dimensions
         page = pdf.pages[0]
-        # pikepdf mediabox is [x0, y0, x1, y1]
         rect = page.mediabox
         page_width = float(rect[2]) - float(rect[0])
         page_height = float(rect[3]) - float(rect[1])
         
-        # Create a new PDF with ReportLab (text layer)
         packet = BytesIO()
         can = canvas.Canvas(packet, pagesize=(page_width, page_height))
         can.setFont("Helvetica", 12)
-        
-        # Convert coordinates: Top-Left (Frontend) -> Bottom-Left (PDF)
         rl_y = page_height - y
-        
         can.drawString(x, rl_y, text)
         can.save()
-        
         packet.seek(0)
         
-        # Read the watermark PDF with pikepdf
         text_pdf = pikepdf.Pdf.open(packet)
         text_page = text_pdf.pages[0]
-        
-        # Overlay the text page onto the original page
-        # check if overlay needs explicit rectangle
         page.overlay(text_page, pikepdf.Rectangle(0, 0, page_width, page_height))
-        
         pdf.save(output_path)
+        return
+    except Exception as e_pikepdf:
+        print(f"Strategy 1 (pikepdf) failed: {e_pikepdf}")
+
+    # Strategy 2: pypdf (Lenient parser)
+    try:
+        from io import BytesIO
+        from reportlab.pdfgen import canvas
+        from pypdf import PdfReader, PdfWriter
+
+        reader = PdfReader(input_path)
+        writer = PdfWriter()
+        page = reader.pages[0]
         
-    except Exception as e:
-        raise RuntimeError(f"PDF text addition failed: {e}")
+        # pypdf coordinates might vary, try to get width/height safely
+        try:
+            page_width = float(page.mediabox.width)
+            page_height = float(page.mediabox.height)
+        except:
+            page_width = 612 # Fallback to Letter width
+            page_height = 792 # Fallback to Letter height
+
+        packet = BytesIO()
+        can = canvas.Canvas(packet, pagesize=(page_width, page_height))
+        can.setFont("Helvetica", 12)
+        rl_y = page_height - y
+        can.drawString(x, rl_y, text)
+        can.save()
+        packet.seek(0)
+        
+        overlay_reader = PdfReader(packet)
+        overlay_page = overlay_reader.pages[0]
+        
+        # Merge
+        page.merge_page(overlay_page)
+        writer.add_page(page)
+        
+        for i in range(1, len(reader.pages)):
+            writer.add_page(reader.pages[i])
+            
+        with open(output_path, "wb") as f:
+            writer.write(f)
+        return
+    except Exception as e_pypdf:
+        print(f"Strategy 2 (pypdf) failed: {e_pypdf}")
+
+    # Strategy 3: PyMuPDF / fitz (Direct modification, very fast)
+    try:
+        doc = fitz.open(input_path)
+        page = doc[0]
+        text_rect = fitz.Rect(x, y, x + 300, y + 50)
+        page.insert_textbox(
+            text_rect,
+            text,
+            fontsize=12,
+            color=(0, 0, 0),
+            align=fitz.TEXT_ALIGN_LEFT
+        )
+        doc.save(output_path)
+        doc.close()
+        return
+    except Exception as e_fitz:
+        print(f"Strategy 3 (fitz) failed: {e_fitz}")
+        
+    # If all fail
+    raise RuntimeError("PDF text addition failed with all available methods (pikepdf, pypdf, fitz). The file may be completely corrupted.")
