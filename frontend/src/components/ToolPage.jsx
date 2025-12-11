@@ -114,7 +114,14 @@ export default function ToolPage({ title, description, endpoint, accept, icon: I
                                     <p className="text-gray-500 mb-10">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                                     <button onClick={handleSubmit} className="btn-primary mb-4">
                                         {/* Dynamic Button Text */}
-                                        {endpoint.includes('/to-') ? 'Convert File' : 'Convert to PDF'}
+                                        {
+                                            endpoint.includes('pdf-to-word') ? 'Convert to Word' :
+                                                endpoint.includes('pdf-to-excel') ? 'Convert to Excel' :
+                                                    endpoint.includes('pdf-to-powerpoint') ? 'Convert to PowerPoint' :
+                                                        endpoint.includes('pdf-to-jpg') ? 'Convert to JPG' :
+                                                            endpoint.includes('/to-') ? 'Convert File' :
+                                                                'Convert to PDF'
+                                        }
                                     </button>
                                     <button onClick={() => setFile(null)} className="block mx-auto text-gray-400 hover:text-gray-600 font-medium transition-colors text-sm">
                                         Remove file
