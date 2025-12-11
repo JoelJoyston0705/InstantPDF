@@ -61,8 +61,8 @@ def add_watermark_to_pdf(input_path: str, output_path: str, watermark_text: str 
     except Exception as e:
         raise RuntimeError(f"Watermark addition failed: {e}")
 
-def add_page_numbers_to_pdf(input_path: str, output_path: str):
-    """Add page numbers to PDF"""
+def add_page_numbers_to_pdf(input_path: str, output_path: str, position: str = "bottom-center", start_from: int = 1, end_at: int = None):
+    """Add page numbers to PDF with customization"""
     try:
         doc = fitz.open(input_path)
     except Exception:
@@ -79,18 +79,55 @@ def add_page_numbers_to_pdf(input_path: str, output_path: str):
              raise RuntimeError(f"Page numbering failed (even after repair): {e_gs}")
 
     try:
-        for page_num in range(len(doc)):
-            page = doc[page_num]
+        total_pages = len(doc)
+        start_index = 0
+        end_index = total_pages
+        
+        # Parse range (1-based to 0-based)
+        if start_from is not None and start_from > 1:
+            start_index = max(0, start_from - 1)
+        if end_at is not None:
+             end_index = min(total_pages, end_at)
+
+        for i in range(start_index, end_index):
+            page = doc[i]
             rect = page.rect
+            width = rect.width
+            height = rect.height
             
-            # Add page number at bottom center
-            page_text = f"Page {page_num + 1}"
-            text_rect = fitz.Rect(
-                rect.width / 2 - 30,
-                rect.height - 30,
-                rect.width / 2 + 30,
-                rect.height - 10
-            )
+            # Margin from edge
+            margin = 30
+            box_width = 100
+            box_height = 20
+            
+            # Calculate coordinates based on position
+            if position == "bottom-center":
+                x0 = (width - box_width) / 2
+                y0 = height - margin
+            elif position == "bottom-right":
+                x0 = width - margin - box_width
+                y0 = height - margin
+            elif position == "bottom-left":
+                x0 = margin
+                y0 = height - margin
+            elif position == "top-center":
+                x0 = (width - box_width) / 2
+                y0 = margin
+            elif position == "top-right":
+                x0 = width - margin - box_width
+                y0 = margin
+            elif position == "top-left":
+                x0 = margin
+                y0 = margin
+            else:
+                # Default to bottom-center
+                x0 = (width - box_width) / 2
+                y0 = height - margin
+
+            text_rect = fitz.Rect(x0, y0, x0 + box_width, y0 + box_height)
+            
+            # Text content
+            page_text = f"{i + 1}"
             
             page.insert_textbox(
                 text_rect,

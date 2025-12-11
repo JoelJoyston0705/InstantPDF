@@ -422,7 +422,13 @@ async def watermark_pdf_endpoint(background_tasks: BackgroundTasks, file: Upload
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/edit/page-numbers-pdf")
-async def page_numbers_pdf_endpoint(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+async def page_numbers_pdf_endpoint(
+    background_tasks: BackgroundTasks, 
+    file: UploadFile = File(...),
+    position: str = "bottom-center",
+    start_from: int = 1,
+    end_at: int = None
+):
     if not file.filename.lower().endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Invalid file type. Please upload a .pdf file.")
     
@@ -436,7 +442,7 @@ async def page_numbers_pdf_endpoint(background_tasks: BackgroundTasks, file: Upl
             shutil.copyfileobj(file.file, buffer)
         
         from pdf_editor import add_page_numbers_to_pdf
-        add_page_numbers_to_pdf(input_path, output_path)
+        add_page_numbers_to_pdf(input_path, output_path, position, start_from, end_at)
         
         background_tasks.add_task(cleanup_files, [input_path, output_path])
         
