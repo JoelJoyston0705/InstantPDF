@@ -15,7 +15,80 @@ import pdfplumber
 from pdf2image import convert_from_path
 from PyPDF2 import PdfReader
 
+import subprocess
+import platform
+
+def get_libreoffice_command():
+    """Find the LibreOffice executable."""
+    if platform.system() == "Darwin":  # macOS
+        search_paths = [
+            "/Applications/LibreOffice.app/Contents/MacOS/soffice",
+            "/usr/local/bin/soffice"
+        ]
+        for path in search_paths:
+            if os.path.exists(path):
+                return path
+    
+    # Default for Linux/Docker (Railway)
+    return "soffice"
+
+def convert_with_libreoffice(input_path: str, output_path: str):
+    """
+    Convert document to PDF using LibreOffice (High Fidelity).
+    Returns True if successful, False otherwise.
+    """
+    soffice = get_libreoffice_command()
+    
+    # Check if we can run soffice (basic check)
+    try:
+        if platform.system() != "Darwin":
+            subprocess.run([soffice, "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+        elif not os.path.exists(soffice):
+            return False
+    except (subprocess.SubprocessError, FileNotFoundError):
+        print("LibreOffice not found, falling back to basic conversion.")
+        return False
+
+    out_dir = os.path.dirname(output_path)
+    
+    # libreoffice --convert-to pdf puts the file in out_dir with the same basename
+    # We need to handle the renaming if output_path has a different name
+    cmd = [
+        soffice,
+        "--headless",
+        "--convert-to",
+        "pdf",
+        "--outdir",
+        out_dir,
+        input_path
+    ]
+    
+    try:
+        subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        
+        # Verify output exists
+        # LibreOffice uses the input filename + .pdf
+        base_name = os.path.splitext(os.path.basename(input_path))[0]
+        expected_output = os.path.join(out_dir, base_name + ".pdf")
+        
+        if os.path.exists(expected_output):
+            # If the requested output path is different, rename it
+            if expected_output != output_path:
+                if os.path.exists(output_path):
+                    os.remove(output_path)
+                os.rename(expected_output, output_path)
+            return True
+    except Exception as e:
+        print(f"LibreOffice conversion error: {e}")
+        return False
+    
+    return False
+
 def convert_docx_to_pdf(input_path: str, output_path: str):
+    # Try High Fidelity Conversion first
+    if convert_with_libreoffice(input_path, output_path):
+        return
+
     try:
         # Load the DOCX document
         doc = Document(input_path)
@@ -113,6 +186,10 @@ def convert_image_to_pdf(input_path: str, output_path: str):
         raise RuntimeError(f"Image conversion failed: {e}")
 
 def convert_pptx_to_pdf(input_path: str, output_path: str):
+    # Try High Fidelity Conversion first
+    if convert_with_libreoffice(input_path, output_path):
+        return
+
     try:
         # Load PowerPoint presentation
         prs = Presentation(input_path)
