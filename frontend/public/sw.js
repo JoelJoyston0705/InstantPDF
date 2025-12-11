@@ -20,6 +20,13 @@ self.addEventListener('install', (event) => {
 
 // Fetch event - serve from cache when offline
 self.addEventListener('fetch', (event) => {
+    // START FIX: Do NOT cache or intercept API calls to Railway
+    const url = new URL(event.request.url);
+    if (url.hostname.includes('railway.app') || event.request.method !== 'GET') {
+        return; // Let the browser handle the request normally
+    }
+    // END FIX
+
     event.respondWith(
         caches.match(event.request)
             .then((response) => {
