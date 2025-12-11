@@ -8,6 +8,7 @@ import CookieConsent from './components/CookieConsent';
 import BatchUpload from './components/BatchUpload';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
+import WatermarkPdfPage from './components/WatermarkPdfPage';
 
 function Home() {
   const tools = [
@@ -356,15 +357,7 @@ function App() {
 
           <Route
             path="/watermark-pdf"
-            element={
-              <ToolPage
-                title="Watermark PDF"
-                description="Add watermarks to protect your PDF documents."
-                endpoint="/edit/watermark-pdf"
-                accept=".pdf"
-                icon={Type}
-              />
-            }
+            element={<WatermarkPdfPage />}
           />
           <Route
             path="/rotate-pdf"
