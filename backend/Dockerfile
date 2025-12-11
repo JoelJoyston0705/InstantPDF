@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
     libopenjp2-7-dev \
     poppler-utils \
     qpdf \
+    ghostscript \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install Python dependencies

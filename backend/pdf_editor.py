@@ -194,4 +194,39 @@ def edit_pdf_add_text(input_path: str, output_path: str, text: str = "Added Text
         print(f"Strategy 3 (fitz) failed: {e_fitz}")
         
     # If all fail
-    raise RuntimeError("PDF text addition failed with all available methods (pikepdf, pypdf, fitz). The file may be completely corrupted.")
+    # Strategy 4: The Nuclear Option (Ghostscript Repair + Fitz)
+    try:
+        import subprocess
+        print("Strategies 1-3 failed. Attempting Ghostscript repair...")
+        
+        repaired_path = input_path.replace(".pdf", "_repaired.pdf")
+        
+        # GS command to repair/rewrite PDF
+        # -o output -sDEVICE=pdfwrite -dPDFSETTINGS=/default input
+        subprocess.run([
+            "gs", "-o", repaired_path, "-sDEVICE=pdfwrite", "-dPDFSETTINGS=/default", "-dNOPAUSE", "-dBATCH", input_path
+        ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        
+        # Now try Fitz again on the repaired file
+        doc = fitz.open(repaired_path)
+        page = doc[0]
+        text_rect = fitz.Rect(x, y, x + 300, y + 50)
+        page.insert_textbox(
+            text_rect,
+            text,
+            fontsize=12,
+            color=(0, 0, 0),
+            align=fitz.TEXT_ALIGN_LEFT
+        )
+        doc.save(output_path)
+        doc.close()
+        
+        # Cleanup
+        if os.path.exists(repaired_path):
+            os.remove(repaired_path)
+        return
+
+    except Exception as e_gs:
+        print(f"Strategy 4 (Ghostscript) failed: {e_gs}")
+
+    raise RuntimeError("PDF is too severely corrupted. Even repair attempts failed.")
