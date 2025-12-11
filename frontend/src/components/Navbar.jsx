@@ -119,7 +119,7 @@ export default function Navbar() {
                             </div>
                         ) : (
                             <>
-                                <button
+                                {/* <button
                                     onClick={() => openAuthModal('login')}
                                     className="hover:opacity-70 transition-opacity"
                                 >
@@ -130,7 +130,10 @@ export default function Navbar() {
                                     className="btn-primary text-sm px-6 py-2.5"
                                 >
                                     Sign Up
-                                </button>
+                                </button> */}
+                                <span className="text-sm font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full border border-green-200">
+                                    No Account Required
+                                </span>
                             </>
                         )}
                     </div>
@@ -159,7 +162,7 @@ export default function Navbar() {
                             </div>
                         ) : (
                             <div className="flex flex-col gap-3">
-                                <button
+                                {/* <button
                                     onClick={() => { openAuthModal('login'); setIsMenuOpen(false) }}
                                     className="w-full py-3 rounded-xl border border-gray-200 dark:border-gray-700 font-medium"
                                 >
@@ -170,7 +173,10 @@ export default function Navbar() {
                                     className="w-full py-3 rounded-xl btn-primary text-white font-medium"
                                 >
                                     Sign Up
-                                </button>
+                                </button> */}
+                                <div className="w-full py-3 text-center text-green-600 font-medium bg-green-50 rounded-xl border border-green-200">
+                                    No Account Required
+                                </div>
                             </div>
                         )}
                     </div>
