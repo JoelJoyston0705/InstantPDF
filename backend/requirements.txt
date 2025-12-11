@@ -18,3 +18,5 @@ pdf2image
 pypdf2
 PyMuPDF
 weasyprint
+pdf2docx
+pdf2docx

@@ -319,19 +319,27 @@ def convert_pdf_to_jpg(input_path: str, output_path: str):
 
 def convert_pdf_to_docx(input_path: str, output_path: str):
     try:
-        # Extract text from PDF
-        pdf = PdfReader(input_path)
+        from pdf2docx import Converter
         
-        # Create new Word document
-        doc = Document()
+        # Use pdf2docx for structure-preserving conversion
+        cv = Converter(input_path)
+        cv.convert(output_path, start=0, end=None)
+        cv.close()
         
-        for page in pdf.pages:
-            text = page.extract_text()
-            if text:
-                doc.add_paragraph(text)
-                doc.add_page_break()
-        
-        doc.save(output_path)
+    except ImportError:
+        # Fallback to text extraction if pdf2docx is missing
+        try:
+             pdf = PdfReader(input_path)
+             doc = Document()
+             for page in pdf.pages:
+                 text = page.extract_text()
+                 if text:
+                     doc.add_paragraph(text)
+                     doc.add_page_break()
+             doc.save(output_path)
+        except Exception as e_inner:
+             raise RuntimeError(f"Basic PDF to Word conversion failed: {e_inner}")
+
     except Exception as e:
         raise RuntimeError(f"PDF to Word conversion failed: {e}")
 
