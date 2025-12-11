@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { LogOut } from 'lucide-react';
+import { LogOut, Menu, X } from 'lucide-react';
 import AuthModal from './AuthModal';
 import DarkModeToggle from './DarkModeToggle';
 
@@ -74,12 +74,9 @@ export default function Navbar() {
                         <button
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
                             className="p-2 text-gray-600 dark:text-gray-300"
+                            aria-label="Toggle menu"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <line x1="3" y1="12" x2="21" y2="12"></line>
-                                <line x1="3" y1="6" x2="21" y2="6"></line>
-                                <line x1="3" y1="18" x2="21" y2="18"></line>
-                            </svg>
+                            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
                         </button>
                     </div>
 
@@ -128,7 +125,7 @@ export default function Navbar() {
 
                 {/* Mobile Dropdown Menu */}
                 {isMenuOpen && (
-                    <div className="md:hidden absolute top-24 left-0 w-full bg-white dark:bg-[#1a1a1a] border-t border-gray-100 dark:border-gray-800 shadow-xl p-6 flex flex-col gap-4">
+                    <div className="md:hidden absolute top-24 left-0 right-0 bg-white dark:bg-[#1a1a1a] border-t border-gray-100 dark:border-gray-800 shadow-xl p-6 flex flex-col gap-4 z-40">
                         <a href="/#tools" onClick={(e) => { smoothScroll(e, 'tools'); setIsMenuOpen(false) }} className="py-2 text-lg font-medium">All Tools</a>
                         <a href="/#features" onClick={(e) => { smoothScroll(e, 'features'); setIsMenuOpen(false) }} className="py-2 text-lg font-medium">Features</a>
                         <a href="/#about" onClick={(e) => { smoothScroll(e, 'about'); setIsMenuOpen(false) }} className="py-2 text-lg font-medium">About</a>
@@ -143,7 +140,9 @@ export default function Navbar() {
                                     </div>
                                     <span className="font-medium">{user.name}</span>
                                 </div>
-                                <button onClick={() => { handleLogout(); setIsMenuOpen(false) }} className="text-left text-red-500 py-2">Logout</button>
+                                <button onClick={() => { handleLogout(); setIsMenuOpen(false) }} className="text-left text-red-500 py-2 flex items-center gap-2">
+                                    <LogOut size={18} /> Logout
+                                </button>
                             </div>
                         ) : (
                             <div className="flex flex-col gap-3">
