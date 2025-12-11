@@ -377,14 +377,14 @@ def convert_pdf_to_pptx(input_path: str, output_path: str):
         # Create PowerPoint
         prs = Presentation()
         
-        for page in pdf.pages:
+        for i, page in enumerate(pdf.pages):
             slide = prs.slides.add_slide(prs.slide_layouts[1])
             title = slide.shapes.title
             content = slide.placeholders[1]
             
             text = page.extract_text()
             if text:
-                title.text = f"Page {pdf.pages.index(page) + 1}"
+                title.text = f"Page {i + 1}"
                 content.text = text[:500]  # Limit text length
         
         prs.save(output_path)
