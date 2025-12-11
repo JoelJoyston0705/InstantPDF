@@ -65,7 +65,20 @@ def add_page_numbers_to_pdf(input_path: str, output_path: str):
     """Add page numbers to PDF"""
     try:
         doc = fitz.open(input_path)
-        
+    except Exception:
+         # Fallback: Repair with Ghostscript
+        import subprocess
+        print("Standard open failed. Attempting Ghostscript repair...")
+        repaired_path = input_path.replace(".pdf", "_repaired.pdf")
+        try:
+            subprocess.run([
+                "gs", "-o", repaired_path, "-sDEVICE=pdfwrite", "-dPDFSETTINGS=/default", "-dNOPAUSE", "-dBATCH", input_path
+            ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            doc = fitz.open(repaired_path)
+        except Exception as e_gs:
+             raise RuntimeError(f"Page numbering failed (even after repair): {e_gs}")
+
+    try:
         for page_num in range(len(doc)):
             page = doc[page_num]
             rect = page.rect
@@ -96,7 +109,20 @@ def crop_pdf(input_path: str, output_path: str, margin: int = 50):
     """Crop PDF margins by specified pixels"""
     try:
         doc = fitz.open(input_path)
-        
+    except Exception:
+         # Fallback: Repair with Ghostscript
+        import subprocess
+        print("Standard open failed. Attempting Ghostscript repair...")
+        repaired_path = input_path.replace(".pdf", "_repaired.pdf")
+        try:
+            subprocess.run([
+                "gs", "-o", repaired_path, "-sDEVICE=pdfwrite", "-dPDFSETTINGS=/default", "-dNOPAUSE", "-dBATCH", input_path
+            ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            doc = fitz.open(repaired_path)
+        except Exception as e_gs:
+             raise RuntimeError(f"Cropping failed (even after repair): {e_gs}")
+
+    try:
         for page_num in range(len(doc)):
             page = doc[page_num]
             rect = page.rect
