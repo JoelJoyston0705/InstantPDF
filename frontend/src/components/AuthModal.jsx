@@ -31,7 +31,8 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
                 ? { email: formData.email, password: formData.password }
                 : formData;
 
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+            // Use Env Var OR fallback to Railway Production URL (Safety Net)
+            const API_URL = import.meta.env.VITE_API_URL || 'https://instantpdf-production.up.railway.app';
             const response = await fetch(`${API_URL}${endpoint}`, {
                 method: 'POST',
                 headers: {

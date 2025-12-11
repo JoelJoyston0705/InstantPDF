@@ -47,7 +47,8 @@ export default function ToolPage({ title, description, endpoint, accept, icon: I
         formData.append('file', file);
 
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+            // Use Env Var OR fallback to Railway Production URL (Safety Net)
+            const API_URL = import.meta.env.VITE_API_URL || 'https://instantpdf-production.up.railway.app';
             const response = await fetch(`${API_URL}${endpoint}`, {
                 method: 'POST',
                 body: formData,
