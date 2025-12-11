@@ -10,6 +10,8 @@ import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
 import WatermarkPdfPage from './components/WatermarkPdfPage';
 import RotatePdfPage from './components/RotatePdfPage';
+import CropPdfPage from './components/CropPdfPage';
+import PageNumbersPdfPage from './components/PageNumbersPdfPage';
 
 function Home() {
   const tools = [
@@ -366,27 +368,11 @@ function App() {
           />
           <Route
             path="/page-numbers"
-            element={
-              <ToolPage
-                title="Page Numbers"
-                description="Add page numbers to your PDF documents."
-                endpoint="/edit/page-numbers-pdf"
-                accept=".pdf"
-                icon={Hash}
-              />
-            }
+            element={<PageNumbersPdfPage />}
           />
           <Route
             path="/crop-pdf"
-            element={
-              <ToolPage
-                title="Crop PDF"
-                description="Remove margins and crop your PDF pages."
-                endpoint="/edit/crop-pdf"
-                accept=".pdf"
-                icon={Crop}
-              />
-            }
+            element={<CropPdfPage />}
           />
 
           {/* Batch Processing Routes */}
