@@ -103,24 +103,46 @@ def crop_pdf(input_path: str, output_path: str, margin: int = 50):
         raise RuntimeError(f"PDF cropping failed: {e}")
 
 def edit_pdf_add_text(input_path: str, output_path: str, text: str = "Added Text", x: int = 100, y: int = 100):
-    """Add text to PDF at specified position"""
+    """Add text to PDF at specified position using PyPDF2 and ReportLab"""
     try:
-        doc = fitz.open(input_path)
+        from io import BytesIO
+        from reportlab.pdfgen import canvas
         
-        # Add text to first page
-        page = doc[0]
+        # Read the existing PDF
+        existing_pdf = PdfReader(input_path)
+        output = PdfWriter()
         
-        # Insert text at specified coordinates
-        text_rect = fitz.Rect(x, y, x + 200, y + 50)
-        page.insert_textbox(
-            text_rect,
-            text,
-            fontsize=12,
-            color=(0, 0, 0),
-            align=fitz.TEXT_ALIGN_LEFT
-        )
+        # Get first page to determine dimensions
+        page = existing_pdf.pages[0]
+        page_width = float(page.mediabox.width)
+        page_height = float(page.mediabox.height)
         
-        doc.save(output_path)
-        doc.close()
+        # Create a new PDF with ReportLab (for the text)
+        packet = BytesIO()
+        can = canvas.Canvas(packet, pagesize=(page_width, page_height))
+        can.setFont("Helvetica", 12)
+        
+        # Convert coordinates: PyMuPDF (Top-Left) -> ReportLab (Bottom-Left)
+        # Assuming y passed from frontend is from top
+        rl_y = page_height - y
+        
+        can.drawString(x, rl_y, text)
+        can.save()
+        
+        # Move to the beginning of the StringIO buffer
+        packet.seek(0)
+        new_pdf = PdfReader(packet)
+        
+        # Merge the text page with the existing page
+        page.merge_page(new_pdf.pages[0])
+        output.add_page(page)
+        
+        # Add the rest of the pages
+        for i in range(1, len(existing_pdf.pages)):
+            output.add_page(existing_pdf.pages[i])
+            
+        with open(output_path, "wb") as f:
+            output.write(f)
+            
     except Exception as e:
         raise RuntimeError(f"PDF text addition failed: {e}")
