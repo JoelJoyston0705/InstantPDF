@@ -13,7 +13,7 @@ from PIL import Image
 from pptx import Presentation
 import pdfplumber
 from pdf2image import convert_from_path
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 
 import subprocess
 import platform

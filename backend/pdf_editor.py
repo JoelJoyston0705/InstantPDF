@@ -1,5 +1,5 @@
 import fitz  # PyMuPDF
-from PyPDF2 import PdfReader, PdfWriter
+from pypdf import PdfReader, PdfWriter
 import os
 
 def rotate_pdf(input_path: str, output_path: str, rotation: int = 90):

@@ -16,8 +16,7 @@ python-pptx
 pdfplumber
 pdf2image
 pypdf
-PyMuPDF
+pikepdf
+pymupdf
 weasyprint
 pdf2docx
-pdf2docx
-pikepdf
