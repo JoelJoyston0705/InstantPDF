@@ -31,7 +31,8 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
                 ? { email: formData.email, password: formData.password }
                 : formData;
 
-            const response = await fetch(`http://localhost:8000${endpoint}`, {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+            const response = await fetch(`${API_URL}${endpoint}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -124,8 +125,8 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
                                     setError('');
                                 }}
                                 className={`flex-1 py-3 rounded-xl font-medium transition-all ${mode === 'login'
-                                        ? 'bg-white text-gray-900 shadow-sm'
-                                        : 'text-gray-500 hover:text-gray-700'
+                                    ? 'bg-white text-gray-900 shadow-sm'
+                                    : 'text-gray-500 hover:text-gray-700'
                                     }`}
                             >
                                 Login
@@ -136,8 +137,8 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
                                     setError('');
                                 }}
                                 className={`flex-1 py-3 rounded-xl font-medium transition-all ${mode === 'signup'
-                                        ? 'bg-white text-gray-900 shadow-sm'
-                                        : 'text-gray-500 hover:text-gray-700'
+                                    ? 'bg-white text-gray-900 shadow-sm'
+                                    : 'text-gray-500 hover:text-gray-700'
                                     }`}
                             >
                                 Sign Up
