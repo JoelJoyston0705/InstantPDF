@@ -8,10 +8,6 @@ import CookieConsent from './components/CookieConsent';
 import BatchUpload from './components/BatchUpload';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
-import WatermarkPdfPage from './components/WatermarkPdfPage';
-import RotatePdfPage from './components/RotatePdfPage';
-import CropPdfPage from './components/CropPdfPage';
-import PageNumbersPdfPage from './components/PageNumbersPdfPage';
 
 function Home() {
   const tools = [
@@ -77,35 +73,6 @@ function Home() {
       icon: Presentation,
       path: '/pdf-to-ppt',
       gradient: 'from-yellow-500 to-amber-600'
-    },
-
-    {
-      title: 'Watermark PDF',
-      description: 'Add watermarks to protect your PDF documents.',
-      icon: Type,
-      path: '/watermark-pdf',
-      gradient: 'from-cyan-500 to-blue-500'
-    },
-    {
-      title: 'Rotate PDF',
-      description: 'Rotate your PDF pages to the correct orientation.',
-      icon: RotateCw,
-      path: '/rotate-pdf',
-      gradient: 'from-lime-500 to-green-500'
-    },
-    {
-      title: 'Page Numbers',
-      description: 'Add page numbers to your PDF documents.',
-      icon: Hash,
-      path: '/page-numbers',
-      gradient: 'from-fuchsia-500 to-pink-500'
-    },
-    {
-      title: 'Crop PDF',
-      description: 'Remove margins and crop your PDF pages.',
-      icon: Crop,
-      path: '/crop-pdf',
-      gradient: 'from-amber-500 to-orange-500'
     }
   ];
 
@@ -358,22 +325,6 @@ function App() {
             }
           />
 
-          <Route
-            path="/watermark-pdf"
-            element={<WatermarkPdfPage />}
-          />
-          <Route
-            path="/rotate-pdf"
-            element={<RotatePdfPage />}
-          />
-          <Route
-            path="/page-numbers"
-            element={<PageNumbersPdfPage />}
-          />
-          <Route
-            path="/crop-pdf"
-            element={<CropPdfPage />}
-          />
 
           {/* Batch Processing Routes */}
           <Route path="/batch/word-to-pdf" element={<BatchUpload title="Batch Convert Word to PDF" endpoint="/convert/docx" accept=".doc,.docx" />} />
@@ -386,10 +337,6 @@ function App() {
           <Route path="/batch/pdf-to-jpg" element={<BatchUpload title="Batch Convert PDF to JPG" endpoint="/convert/pdf-to-jpg" accept=".pdf" />} />
           <Route path="/batch/pdf-to-ppt" element={<BatchUpload title="Batch Convert PDF to PowerPoint" endpoint="/convert/pdf-to-pptx" accept=".pdf" />} />
 
-          <Route path="/batch/watermark-pdf" element={<BatchUpload title="Batch Add Watermark" endpoint="/edit/watermark-pdf" accept=".pdf" />} />
-          <Route path="/batch/rotate-pdf" element={<BatchUpload title="Batch Rotate PDFs" endpoint="/edit/rotate-pdf" accept=".pdf" />} />
-          <Route path="/batch/page-numbers" element={<BatchUpload title="Batch Add Page Numbers" endpoint="/edit/page-numbers-pdf" accept=".pdf" />} />
-          <Route path="/batch/crop-pdf" element={<BatchUpload title="Batch Crop PDFs" endpoint="/edit/crop-pdf" accept=".pdf" />} />
 
           {/* Legal Pages */}
           <Route path="/privacy" element={<PrivacyPolicy />} />
