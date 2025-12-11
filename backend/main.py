@@ -18,9 +18,11 @@ from auth import get_password_hash, verify_password, create_access_token
 app = FastAPI(title="InstantPDF API")
 
 # Allow CORS for frontend
+origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify the frontend domain
+    allow_origins=origins, 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
