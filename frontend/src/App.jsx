@@ -115,7 +115,7 @@ function Home() {
         <div className="container mx-auto max-w-5xl text-center relative z-10">
           <div className="animate-fade-in-up">
             <h1 className="mb-6">
-              Every tool you need.<br />In one place.
+              Premium PDF Tools.<br />Completely Free.
             </h1>
             <p className="subtitle mb-12 max-w-3xl mx-auto">
               Transform, convert, and manage your documents with InstantPDF.
