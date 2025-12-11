@@ -257,30 +257,54 @@ def convert_pptx_to_pdf(input_path: str, output_path: str):
         raise RuntimeError(f"PowerPoint conversion failed: {e}")
 
 def convert_html_to_pdf(input_path: str, output_path: str):
+    # Try High Fidelity Conversion first (LibreOffice)
+    if convert_with_libreoffice(input_path, output_path):
+        return
+
     try:
-        # Read HTML content
-        with open(input_path, 'r', encoding='utf-8') as f:
-            html_content = f.read()
+        # Fallback: Use xhtml2pdf (supports HTML/CSS much better than ReportLab directly)
+        from xhtml2pdf import pisa
         
-        # Simple HTML to PDF conversion
-        from reportlab.platypus import SimpleDocTemplate, Paragraph
-        from reportlab.lib.styles import getSampleStyleSheet
-        from reportlab.lib.pagesizes import letter
-        import re
+        with open(input_path, "r", encoding='utf-8') as source_file:
+            with open(output_path, "wb") as output_file:
+                pisa_status = pisa.CreatePDF(
+                    source_file,
+                    dest=output_file
+                )
         
-        pdf = SimpleDocTemplate(output_path, pagesize=letter)
-        styles = getSampleStyleSheet()
-        story = []
-        
-        # Strip HTML tags for simple conversion
-        text = re.sub('<[^<]+?>', '', html_content)
-        
-        for line in text.split('\n'):
-            if line.strip():
-                p = Paragraph(line.strip(), styles['Normal'])
-                story.append(p)
-        
-        pdf.build(story)
+        if pisa_status.err:
+             raise RuntimeError(f"HTML conversion error: {pisa_status.err}")
+
+    except ImportError:
+         # Double Fallback: Simple text extraction if xhtml2pdf is missing
+         try:
+            from reportlab.platypus import SimpleDocTemplate, Paragraph
+            from reportlab.lib.styles import getSampleStyleSheet
+            from reportlab.lib.pagesizes import letter
+            from xml.sax.saxutils import escape
+            import re
+            
+            with open(input_path, 'r', encoding='utf-8') as f:
+                html_content = f.read()
+
+            pdf = SimpleDocTemplate(output_path, pagesize=letter)
+            styles = getSampleStyleSheet()
+            story = []
+            
+            # Use regex to strip tags, but then ESCAPE content for Paragraph
+            text = re.sub('<[^<]+?>', '', html_content)
+            
+            for line in text.split('\n'):
+                if line.strip():
+                    # Escape special characters so ReportLab doesn't crash on <, >, &
+                    safe_text = escape(line.strip())
+                    p = Paragraph(safe_text, styles['Normal'])
+                    story.append(p)
+            
+            pdf.build(story)
+         except Exception as e_inner:
+             raise RuntimeError(f"Basic HTML conversion failed: {e_inner}")
+
     except Exception as e:
         raise RuntimeError(f"HTML conversion failed: {e}")
 
