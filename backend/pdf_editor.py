@@ -103,46 +103,44 @@ def crop_pdf(input_path: str, output_path: str, margin: int = 50):
         raise RuntimeError(f"PDF cropping failed: {e}")
 
 def edit_pdf_add_text(input_path: str, output_path: str, text: str = "Added Text", x: int = 100, y: int = 100):
-    """Add text to PDF at specified position using PyPDF2 and ReportLab"""
+    """Add text to PDF at specified position using pikepdf and ReportLab (Robust)"""
     try:
+        import pikepdf
         from io import BytesIO
         from reportlab.pdfgen import canvas
         
-        # Read the existing PDF
-        existing_pdf = PdfReader(input_path)
-        output = PdfWriter()
+        # Open with pikepdf (it automatically repairs many issues)
+        pdf = pikepdf.Pdf.open(input_path, allow_overwriting_input=True)
         
-        # Get first page to determine dimensions
-        page = existing_pdf.pages[0]
-        page_width = float(page.mediabox.width)
-        page_height = float(page.mediabox.height)
+        # Get first page dimensions
+        page = pdf.pages[0]
+        # pikepdf mediabox is [x0, y0, x1, y1]
+        rect = page.mediabox
+        page_width = float(rect[2]) - float(rect[0])
+        page_height = float(rect[3]) - float(rect[1])
         
-        # Create a new PDF with ReportLab (for the text)
+        # Create a new PDF with ReportLab (text layer)
         packet = BytesIO()
         can = canvas.Canvas(packet, pagesize=(page_width, page_height))
         can.setFont("Helvetica", 12)
         
-        # Convert coordinates: PyMuPDF (Top-Left) -> ReportLab (Bottom-Left)
-        # Assuming y passed from frontend is from top
+        # Convert coordinates: Top-Left (Frontend) -> Bottom-Left (PDF)
         rl_y = page_height - y
         
         can.drawString(x, rl_y, text)
         can.save()
         
-        # Move to the beginning of the StringIO buffer
         packet.seek(0)
-        new_pdf = PdfReader(packet)
         
-        # Merge the text page with the existing page
-        page.merge_page(new_pdf.pages[0])
-        output.add_page(page)
+        # Read the watermark PDF with pikepdf
+        text_pdf = pikepdf.Pdf.open(packet)
+        text_page = text_pdf.pages[0]
         
-        # Add the rest of the pages
-        for i in range(1, len(existing_pdf.pages)):
-            output.add_page(existing_pdf.pages[i])
-            
-        with open(output_path, "wb") as f:
-            output.write(f)
-            
+        # Overlay the text page onto the original page
+        # check if overlay needs explicit rectangle
+        page.overlay(text_page, pikepdf.Rectangle(0, 0, page_width, page_height))
+        
+        pdf.save(output_path)
+        
     except Exception as e:
         raise RuntimeError(f"PDF text addition failed: {e}")

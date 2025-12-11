@@ -15,8 +15,9 @@ email-validator
 python-pptx
 pdfplumber
 pdf2image
-pypdf2
+pypdf
 PyMuPDF
 weasyprint
 pdf2docx
 pdf2docx
+pikepdf
