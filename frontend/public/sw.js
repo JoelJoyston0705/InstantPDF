@@ -1,57 +1,27 @@
-const CACHE_NAME = 'instantpdf-v1';
-const urlsToCache = [
-    '/',
-    '/index.html',
-    '/logo.png',
-    '/manifest.json'
-];
+// SERVICE WORKER KILLER
+// This version intentionally removes the 'fetch' listener to stop intercepting requests.
+// It effectively disables PWA offline capabilities to fix the critical CORS/POST error.
 
-// Install event - cache resources
+const CACHE_NAME = 'instantpdf-v1-cleanup';
+
 self.addEventListener('install', (event) => {
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then((cache) => {
-                console.log('Opened cache');
-                return cache.addAll(urlsToCache);
-            })
-    );
+    // Force immediate takeover
     self.skipWaiting();
 });
 
-// Fetch event - serve from cache when offline
-self.addEventListener('fetch', (event) => {
-    // START FIX: Do NOT cache or intercept API calls to Railway
-    const url = new URL(event.request.url);
-    if (url.hostname.includes('railway.app') || event.request.method !== 'GET') {
-        return; // Let the browser handle the request normally
-    }
-    // END FIX
-
-    event.respondWith(
-        caches.match(event.request)
-            .then((response) => {
-                // Cache hit - return response
-                if (response) {
-                    return response;
-                }
-                return fetch(event.request);
-            }
-            )
-    );
-});
-
-// Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
+    // Claim any clients immediately, replacing the old buggy SW
+    event.waitUntil(self.clients.claim());
+
+    // Delete old caches to be safe
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
-                cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME) {
-                        return caches.delete(cacheName);
-                    }
-                })
+                cacheNames.map((cacheName) => caches.delete(cacheName))
             );
         })
     );
-    return self.clients.claim();
 });
+
+// NO FETCH LISTENER
+// This prevents the Service Worker from touching network requests at all.
