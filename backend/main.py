@@ -1,0 +1,504 @@
+import os
+import shutil
+import tempfile
+from pathlib import Path
+from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks, Depends
+from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, EmailStr
+from sqlalchemy.orm import Session
+from converter import (
+    convert_docx_to_pdf, convert_xlsx_to_pdf, convert_image_to_pdf,
+    convert_pptx_to_pdf, convert_html_to_pdf,
+    convert_pdf_to_jpg, convert_pdf_to_docx, convert_pdf_to_xlsx, convert_pdf_to_pptx
+)
+from database import get_db, User
+from auth import get_password_hash, verify_password, create_access_token
+
+app = FastAPI(title="InstantPDF API")
+
+# Allow CORS for frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, specify the frontend domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Pydantic models for request/response
+class UserSignup(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+
+def cleanup_files(paths: list[str]):
+    """Background task to remove temporary files after response is sent."""
+    for path in paths:
+        try:
+            if os.path.exists(path):
+                os.remove(path)
+        except Exception as e:
+            print(f"Error deleting file {path}: {e}")
+
+@app.get("/")
+def read_root():
+    return {"message": "InstantPDF API is running"}
+
+# Authentication Endpoints
+@app.post("/auth/signup")
+def signup(user_data: UserSignup, db: Session = Depends(get_db)):
+    # Check if user already exists
+    existing_user = db.query(User).filter(User.email == user_data.email).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Create new user
+    hashed_password = get_password_hash(user_data.password)
+    new_user = User(
+        name=user_data.name,
+        email=user_data.email,
+        hashed_password=hashed_password
+    )
+    
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    
+    # Create access token
+    access_token = create_access_token(data={"sub": new_user.email, "id": new_user.id})
+    
+    return {
+        "token": access_token,
+        "user": {
+            "id": new_user.id,
+            "name": new_user.name,
+            "email": new_user.email
+        }
+    }
+
+@app.post("/auth/login")
+def login(credentials: UserLogin, db: Session = Depends(get_db)):
+    # Find user
+    user = db.query(User).filter(User.email == credentials.email).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Verify password
+    if not verify_password(credentials.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Create access token
+    access_token = create_access_token(data={"sub": user.email, "id": user.id})
+    
+    return {
+        "token": access_token,
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email
+        }
+    }
+
+@app.post("/convert/docx")
+async def convert_docx(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+    if not file.filename.endswith(".docx"):
+        raise HTTPException(status_code=400, detail="Invalid file type. Please upload a .docx file.")
+    
+    temp_dir = tempfile.mkdtemp()
+    input_path = os.path.join(temp_dir, file.filename)
+    output_filename = Path(file.filename).stem + ".pdf"
+    output_path = os.path.join(temp_dir, output_filename)
+
+    try:
+        with open(input_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        convert_docx_to_pdf(input_path, output_path)
+        
+        # Schedule cleanup
+        background_tasks.add_task(cleanup_files, [input_path, output_path])
+        
+        return FileResponse(
+            output_path, 
+            media_type="application/pdf", 
+            filename=output_filename
+        )
+    except Exception as e:
+        cleanup_files([input_path])
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/convert/xlsx")
+async def convert_xlsx(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+    if not file.filename.endswith(".xlsx"):
+        raise HTTPException(status_code=400, detail="Invalid file type. Please upload a .xlsx file.")
+    
+    temp_dir = tempfile.mkdtemp()
+    input_path = os.path.join(temp_dir, file.filename)
+    output_filename = Path(file.filename).stem + ".pdf"
+    output_path = os.path.join(temp_dir, output_filename)
+
+    try:
+        with open(input_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        convert_xlsx_to_pdf(input_path, output_path)
+        
+        background_tasks.add_task(cleanup_files, [input_path, output_path])
+        
+        return FileResponse(
+            output_path, 
+            media_type="application/pdf", 
+            filename=output_filename
+        )
+    except Exception as e:
+        cleanup_files([input_path])
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/convert/image")
+async def convert_image(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+    if not file.filename.lower().endswith(('.jpg', '.jpeg', '.png')):
+        raise HTTPException(status_code=400, detail="Invalid file type. Please upload a JPG or PNG file.")
+    
+    temp_dir = tempfile.mkdtemp()
+    input_path = os.path.join(temp_dir, file.filename)
+    output_filename = Path(file.filename).stem + ".pdf"
+    output_path = os.path.join(temp_dir, output_filename)
+
+    try:
+        with open(input_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        convert_image_to_pdf(input_path, output_path)
+        
+        background_tasks.add_task(cleanup_files, [input_path, output_path])
+        
+        return FileResponse(
+            output_path, 
+            media_type="application/pdf", 
+            filename=output_filename
+        )
+    except Exception as e:
+        cleanup_files([input_path])
+        raise HTTPException(status_code=500, detail=str(e))
+
+# PowerPoint to PDF
+@app.post("/convert/pptx")
+async def convert_pptx(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+    if not file.filename.lower().endswith(('.pptx', '.ppt')):
+        raise HTTPException(status_code=400, detail="Invalid file type. Please upload a .pptx file.")
+    
+    temp_dir = tempfile.mkdtemp()
+    input_path = os.path.join(temp_dir, file.filename)
+    output_filename = Path(file.filename).stem + ".pdf"
+    output_path = os.path.join(temp_dir, output_filename)
+
+    try:
+        with open(input_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        convert_pptx_to_pdf(input_path, output_path)
+        
+        background_tasks.add_task(cleanup_files, [input_path, output_path])
+        
+        return FileResponse(
+            output_path, 
+            media_type="application/pdf", 
+            filename=output_filename
+        )
+    except Exception as e:
+        cleanup_files([input_path])
+        raise HTTPException(status_code=500, detail=str(e))
+
+# HTML to PDF
+@app.post("/convert/html")
+async def convert_html(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+    if not file.filename.lower().endswith('.html'):
+        raise HTTPException(status_code=400, detail="Invalid file type. Please upload an .html file.")
+    
+    temp_dir = tempfile.mkdtemp()
+    input_path = os.path.join(temp_dir, file.filename)
+    output_filename = Path(file.filename).stem + ".pdf"
+    output_path = os.path.join(temp_dir, output_filename)
+
+    try:
+        with open(input_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        convert_html_to_pdf(input_path, output_path)
+        
+        background_tasks.add_task(cleanup_files, [input_path, output_path])
+        
+        return FileResponse(
+            output_path, 
+            media_type="application/pdf", 
+            filename=output_filename
+        )
+    except Exception as e:
+        cleanup_files([input_path])
+        raise HTTPException(status_code=500, detail=str(e))
+
+# PDF to JPG
+@app.post("/convert/pdf-to-jpg")
+async def convert_pdf_jpg(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Invalid file type. Please upload a .pdf file.")
+    
+    temp_dir = tempfile.mkdtemp()
+    input_path = os.path.join(temp_dir, file.filename)
+    output_filename = Path(file.filename).stem + ".jpg"
+    output_path = os.path.join(temp_dir, output_filename)
+
+    try:
+        with open(input_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        convert_pdf_to_jpg(input_path, output_path)
+        
+        background_tasks.add_task(cleanup_files, [input_path, output_path])
+        
+        return FileResponse(
+            output_path, 
+            media_type="image/jpeg", 
+            filename=output_filename
+        )
+    except Exception as e:
+        cleanup_files([input_path])
+        raise HTTPException(status_code=500, detail=str(e))
+
+# PDF to Word
+@app.post("/convert/pdf-to-word")
+async def convert_pdf_word(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Invalid file type. Please upload a .pdf file.")
+    
+    temp_dir = tempfile.mkdtemp()
+    input_path = os.path.join(temp_dir, file.filename)
+    output_filename = Path(file.filename).stem + ".docx"
+    output_path = os.path.join(temp_dir, output_filename)
+
+    try:
+        with open(input_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        convert_pdf_to_docx(input_path, output_path)
+        
+        background_tasks.add_task(cleanup_files, [input_path, output_path])
+        
+        return FileResponse(
+            output_path, 
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
+            filename=output_filename
+        )
+    except Exception as e:
+        cleanup_files([input_path])
+        raise HTTPException(status_code=500, detail=str(e))
+
+# PDF to Excel
+@app.post("/convert/pdf-to-excel")
+async def convert_pdf_excel(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Invalid file type. Please upload a .pdf file.")
+    
+    temp_dir = tempfile.mkdtemp()
+    input_path = os.path.join(temp_dir, file.filename)
+    output_filename = Path(file.filename).stem + ".xlsx"
+    output_path = os.path.join(temp_dir, output_filename)
+
+    try:
+        with open(input_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        convert_pdf_to_xlsx(input_path, output_path)
+        
+        background_tasks.add_task(cleanup_files, [input_path, output_path])
+        
+        return FileResponse(
+            output_path, 
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 
+            filename=output_filename
+        )
+    except Exception as e:
+        cleanup_files([input_path])
+        raise HTTPException(status_code=500, detail=str(e))
+
+# PDF to PowerPoint
+@app.post("/convert/pdf-to-pptx")
+async def convert_pdf_ppt(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Invalid file type. Please upload a .pdf file.")
+    
+    temp_dir = tempfile.mkdtemp()
+    input_path = os.path.join(temp_dir, file.filename)
+    output_filename = Path(file.filename).stem + ".pptx"
+    output_path = os.path.join(temp_dir, output_filename)
+
+    try:
+        with open(input_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        convert_pdf_to_pptx(input_path, output_path)
+        
+        background_tasks.add_task(cleanup_files, [input_path, output_path])
+        
+        return FileResponse(
+            output_path, 
+            media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation", 
+            filename=output_filename
+        )
+    except Exception as e:
+        cleanup_files([input_path])
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Import PDF editor functions at the top of main.py
+# from pdf_editor import rotate_pdf, add_watermark_to_pdf, add_page_numbers_to_pdf, crop_pdf, edit_pdf_add_text
+
+# PDF Editing Tools
+@app.post("/edit/rotate-pdf")
+async def rotate_pdf_endpoint(background_tasks: BackgroundTasks, file: UploadFile = File(...), rotation: int = 90):
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Invalid file type. Please upload a .pdf file.")
+    
+    temp_dir = tempfile.mkdtemp()
+    input_path = os.path.join(temp_dir, file.filename)
+    output_filename = Path(file.filename).stem + "_rotated.pdf"
+    output_path = os.path.join(temp_dir, output_filename)
+
+    try:
+        with open(input_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        from pdf_editor import rotate_pdf
+        rotate_pdf(input_path, output_path, rotation)
+        
+        background_tasks.add_task(cleanup_files, [input_path, output_path])
+        
+        return FileResponse(
+            output_path, 
+            media_type="application/pdf", 
+            filename=output_filename
+        )
+    except Exception as e:
+        cleanup_files([input_path])
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/edit/watermark-pdf")
+async def watermark_pdf_endpoint(background_tasks: BackgroundTasks, file: UploadFile = File(...), text: str = "WATERMARK"):
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Invalid file type. Please upload a .pdf file.")
+    
+    temp_dir = tempfile.mkdtemp()
+    input_path = os.path.join(temp_dir, file.filename)
+    output_filename = Path(file.filename).stem + "_watermarked.pdf"
+    output_path = os.path.join(temp_dir, output_filename)
+
+    try:
+        with open(input_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        from pdf_editor import add_watermark_to_pdf
+        add_watermark_to_pdf(input_path, output_path, text)
+        
+        background_tasks.add_task(cleanup_files, [input_path, output_path])
+        
+        return FileResponse(
+            output_path, 
+            media_type="application/pdf", 
+            filename=output_filename
+        )
+    except Exception as e:
+        cleanup_files([input_path])
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/edit/page-numbers-pdf")
+async def page_numbers_pdf_endpoint(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Invalid file type. Please upload a .pdf file.")
+    
+    temp_dir = tempfile.mkdtemp()
+    input_path = os.path.join(temp_dir, file.filename)
+    output_filename = Path(file.filename).stem + "_numbered.pdf"
+    output_path = os.path.join(temp_dir, output_filename)
+
+    try:
+        with open(input_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        from pdf_editor import add_page_numbers_to_pdf
+        add_page_numbers_to_pdf(input_path, output_path)
+        
+        background_tasks.add_task(cleanup_files, [input_path, output_path])
+        
+        return FileResponse(
+            output_path, 
+            media_type="application/pdf", 
+            filename=output_filename
+        )
+    except Exception as e:
+        cleanup_files([input_path])
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/edit/crop-pdf")
+async def crop_pdf_endpoint(background_tasks: BackgroundTasks, file: UploadFile = File(...), margin: int = 50):
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Invalid file type. Please upload a .pdf file.")
+    
+    temp_dir = tempfile.mkdtemp()
+    input_path = os.path.join(temp_dir, file.filename)
+    output_filename = Path(file.filename).stem + "_cropped.pdf"
+    output_path = os.path.join(temp_dir, output_filename)
+
+    try:
+        with open(input_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        from pdf_editor import crop_pdf
+        crop_pdf(input_path, output_path, margin)
+        
+        background_tasks.add_task(cleanup_files, [input_path, output_path])
+        
+        return FileResponse(
+            output_path, 
+            media_type="application/pdf", 
+            filename=output_filename
+        )
+    except Exception as e:
+        cleanup_files([input_path])
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/edit/add-text-pdf")
+async def add_text_pdf_endpoint(background_tasks: BackgroundTasks, file: UploadFile = File(...), text: str = "Added Text"):
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Invalid file type. Please upload a .pdf file.")
+    
+    temp_dir = tempfile.mkdtemp()
+    input_path = os.path.join(temp_dir, file.filename)
+    output_filename = Path(file.filename).stem + "_edited.pdf"
+    output_path = os.path.join(temp_dir, output_filename)
+
+    try:
+        with open(input_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        from pdf_editor import edit_pdf_add_text
+        edit_pdf_add_text(input_path, output_path, text)
+        
+        background_tasks.add_task(cleanup_files, [input_path, output_path])
+        
+        return FileResponse(
+            output_path, 
+            media_type="application/pdf", 
+            filename=output_filename
+        )
+    except Exception as e:
+        cleanup_files([input_path])
+        raise HTTPException(status_code=500, detail=str(e))

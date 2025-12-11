@@ -1,0 +1,237 @@
+import React, { useState } from 'react';
+import { X, Mail, Lock, User, CheckCircle } from 'lucide-react';
+
+export default function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
+    const [mode, setMode] = useState(initialMode); // 'login' or 'signup'
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        password: ''
+    });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState(false);
+
+    const handleChange = (e) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value
+        });
+        setError('');
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+
+        try {
+            const endpoint = mode === 'login' ? '/auth/login' : '/auth/signup';
+            const payload = mode === 'login'
+                ? { email: formData.email, password: formData.password }
+                : formData;
+
+            const response = await fetch(`http://localhost:8000${endpoint}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.detail || 'Authentication failed');
+            }
+
+            // Store token
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+
+            setSuccess(true);
+            setTimeout(() => {
+                onClose();
+                window.location.reload(); // Refresh to update auth state
+            }, 1500);
+
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+            {/* Backdrop */}
+            <div
+                className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                onClick={onClose}
+            ></div>
+
+            {/* Modal */}
+            <div className="relative bg-white rounded-3xl shadow-2xl max-w-md w-full animate-scale-in overflow-hidden">
+                {/* Close Button */}
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors z-10"
+                >
+                    <X size={20} className="text-gray-600" />
+                </button>
+
+                {success ? (
+                    // Success State
+                    <div className="p-12 text-center">
+                        <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
+                            <CheckCircle size={40} className="text-white" strokeWidth={2} />
+                        </div>
+                        <h2 className="text-3xl font-semibold mb-3" style={{ letterSpacing: '-0.022em' }}>
+                            {mode === 'signup' ? 'Welcome!' : 'Welcome Back!'}
+                        </h2>
+                        <p className="text-gray-500">
+                            {mode === 'signup'
+                                ? 'Your account has been created successfully.'
+                                : 'You have been logged in successfully.'}
+                        </p>
+                    </div>
+                ) : (
+                    <div className="p-8">
+                        {/* Logo */}
+                        <div className="text-center mb-8">
+                            <img
+                                src="/logo.png"
+                                alt="InstantPDF"
+                                className="w-16 h-16 mx-auto mb-4"
+                            />
+                            <h2 className="text-3xl font-semibold mb-2" style={{ letterSpacing: '-0.022em' }}>
+                                {mode === 'login' ? 'Welcome Back' : 'Create Account'}
+                            </h2>
+                            <p className="text-gray-500">
+                                {mode === 'login'
+                                    ? 'Sign in to your account'
+                                    : 'Start converting documents for free'}
+                            </p>
+                        </div>
+
+                        {/* Tab Switcher */}
+                        <div className="flex bg-gray-100 rounded-2xl p-1 mb-8">
+                            <button
+                                onClick={() => {
+                                    setMode('login');
+                                    setError('');
+                                }}
+                                className={`flex-1 py-3 rounded-xl font-medium transition-all ${mode === 'login'
+                                        ? 'bg-white text-gray-900 shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                    }`}
+                            >
+                                Login
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setMode('signup');
+                                    setError('');
+                                }}
+                                className={`flex-1 py-3 rounded-xl font-medium transition-all ${mode === 'signup'
+                                        ? 'bg-white text-gray-900 shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                    }`}
+                            >
+                                Sign Up
+                            </button>
+                        </div>
+
+                        {/* Form */}
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            {mode === 'signup' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Full Name
+                                    </label>
+                                    <div className="relative">
+                                        <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                                        <input
+                                            type="text"
+                                            name="name"
+                                            value={formData.name}
+                                            onChange={handleChange}
+                                            placeholder="John Doe"
+                                            required={mode === 'signup'}
+                                            className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Email Address
+                                </label>
+                                <div className="relative">
+                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        placeholder="you@example.com"
+                                        required
+                                        className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Password
+                                </label>
+                                <div className="relative">
+                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                                    <input
+                                        type="password"
+                                        name="password"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        placeholder="••••••••"
+                                        required
+                                        minLength={6}
+                                        className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                                    />
+                                </div>
+                            </div>
+
+                            {error && (
+                                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">
+                                    {error}
+                                </div>
+                            )}
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full btn-primary py-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {loading ? (
+                                    <div className="spinner mx-auto" style={{ width: '20px', height: '20px', borderWidth: '2px' }}></div>
+                                ) : (
+                                    mode === 'login' ? 'Sign In' : 'Create Account'
+                                )}
+                            </button>
+                        </form>
+
+                        {mode === 'login' && (
+                            <div className="mt-6 text-center">
+                                <button className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                                    Forgot password?
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}

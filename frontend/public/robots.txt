@@ -1,0 +1,9 @@
+# Allow all search engines
+User-agent: *
+Allow: /
+
+# Don't index API calls
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://your-app.vercel.app/sitemap.xml
