@@ -1,7 +1,8 @@
 // Register Service Worker for PWA
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
+        // Force update SW by adding version param
+        navigator.serviceWorker.register('/sw.js?v=2')
             .then((registration) => {
                 console.log('✅ PWA: Service Worker registered!', registration.scope);
             })
