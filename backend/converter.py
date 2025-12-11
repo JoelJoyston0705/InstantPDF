@@ -57,14 +57,42 @@ def convert_xlsx_to_pdf(input_path: str, output_path: str):
         
         pdf = FPDF()
         pdf.set_auto_page_break(auto=True, margin=15)
+        
+        # Add Unicode font support (bundled Roboto)
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        font_path = os.path.join(current_dir, "fonts", "Roboto-Regular.ttf")
+        font_name = "Roboto"
+        use_unicode_font = False
+        
+        if os.path.exists(font_path):
+            try:
+                pdf.add_font(font_name, fname=font_path)
+                use_unicode_font = True
+            except Exception as e:
+                print(f"Failed to load font {font_path}: {e}")
+
         pdf.add_page()
-        pdf.set_font("Helvetica", size=10)
+        
+        if use_unicode_font:
+            pdf.set_font(font_name, size=10)
+        else:
+            pdf.set_font("Helvetica", size=10)
 
         # Iterate rows
         for row in sheet.iter_rows(values_only=True):
             for item in row:
                 # Basic cell handling
                 text = str(item) if item is not None else ""
+                
+                # Sanitize text based on font availability
+                if not use_unicode_font:
+                     replacements = {'−': '-', '–': '-', '—': '-'}
+                     for old, new in replacements.items():
+                         text = text.replace(old, new)
+                     
+                     # Final safety net: strictly encode to latin-1
+                     text = text.encode('latin-1', 'replace').decode('latin-1')
+                
                 # Simple truncation to avoid breaking layout
                 text = (text[:20] + '..') if len(text) > 20 else text
                 pdf.cell(40, 10, text, border=1, new_x=XPos.RIGHT, new_y=YPos.TOP)
@@ -93,16 +121,56 @@ def convert_pptx_to_pdf(input_path: str, output_path: str):
         pdf = FPDF(orientation='L')  # Landscape for slides
         pdf.set_auto_page_break(auto=False)
         
+        # Add Unicode font support (bundled Roboto)
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        font_path = os.path.join(current_dir, "fonts", "Roboto-Regular.ttf")
+        font_name = "Roboto"
+        use_unicode_font = False
+        
+        if os.path.exists(font_path):
+            try:
+                pdf.add_font(font_name, fname=font_path)
+                use_unicode_font = True
+            except Exception as e:
+                print(f"Failed to load font {font_path}: {e}")
+        else:
+             print(f"Font not found at {font_path}")
+        
         # Extract text from slides
         for slide in prs.slides:
             pdf.add_page()
-            pdf.set_font("Helvetica", size=12)
+            
+            if use_unicode_font:
+                pdf.set_font(font_name, size=12)
+            else:
+                pdf.set_font("Helvetica", size=12)
+            
             y_position = 20
             
             for shape in slide.shapes:
                 if hasattr(shape, "text"):
                     text = shape.text.strip()
                     if text:
+                        # Sanitize text based on font availability
+                        if not use_unicode_font:
+                            # Replace common problematic characters
+                            replacements = {
+                                '−': '-',  # minus sign
+                                '–': '-',  # en dash
+                                '—': '-',  # em dash
+                                '"': '"',
+                                '"': '"',
+                                ''': "'",
+                                ''': "'",
+                                '…': '...'
+                            }
+                            for old, new in replacements.items():
+                                text = text.replace(old, new)
+                            
+                            # Final safety net: strictly encode to latin-1, replacing errors with '?'
+                            # This prevents the application from crashing
+                            text = text.encode('latin-1', 'replace').decode('latin-1')
+
                         pdf.set_xy(20, y_position)
                         pdf.multi_cell(0, 10, text)
                         y_position += 15
