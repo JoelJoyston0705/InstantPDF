@@ -107,7 +107,7 @@ export default function Navbar() {
                                     <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 via-red-500 to-yellow-500 flex items-center justify-center text-white font-semibold text-sm">
                                         {user.name?.charAt(0).toUpperCase()}
                                     </div>
-                                    <span className="text-sm font-medium">{user.name}</span>
+                                    <span className="text-sm font-medium text-gray-900 dark:text-white">{user.name}</span>
                                 </div>
                                 <button
                                     onClick={handleLogout}
@@ -151,7 +151,7 @@ export default function Navbar() {
                                     <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 via-red-500 to-yellow-500 flex items-center justify-center text-white font-semibold text-sm">
                                         {user.name?.charAt(0).toUpperCase()}
                                     </div>
-                                    <span className="font-medium">{user.name}</span>
+                                    <span className="font-medium text-gray-900 dark:text-white">{user.name}</span>
                                 </div>
                                 <button onClick={() => { handleLogout(); setIsMenuOpen(false) }} className="text-left text-red-500 py-2 flex items-center gap-2">
                                     <LogOut size={18} /> Logout
