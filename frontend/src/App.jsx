@@ -8,6 +8,7 @@ import CookieConsent from './components/CookieConsent';
 
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
+import ResetPassword from './components/ResetPassword';
 
 function Home() {
   const tools = [
@@ -331,6 +332,7 @@ function App() {
           {/* Legal Pages */}
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
         </Routes>
         <CookieConsent />

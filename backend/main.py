@@ -14,6 +14,7 @@ from converter import (
 )
 from database import get_db, User
 from auth import get_password_hash, verify_password, create_access_token
+from datetime import timedelta
 
 app = FastAPI(title="InstantPDF API")
 
@@ -42,6 +43,13 @@ class UserResponse(BaseModel):
     id: int
     name: str
     email: str
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
 
 def cleanup_files(paths: list[str]):
     """Background task to remove temporary files after response is sent."""
@@ -110,6 +118,98 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
             "email": user.email
         }
     }
+
+@app.post("/auth/forgot-password")
+async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    """Send password reset email to user"""
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+    
+    user = db.query(User).filter(User.email == request.email).first()
+    
+    # Always return success to prevent email enumeration
+    if not user:
+        return {"message": "If an account with that email exists, a reset link has been sent."}
+    
+    # Create reset token (valid for 1 hour)
+    reset_token = create_access_token(
+        data={"sub": user.email, "type": "reset"},
+        expires_delta=timedelta(hours=1)
+    )
+    
+    # Get email credentials from environment
+    smtp_email = os.getenv("SMTP_EMAIL", "")
+    smtp_password = os.getenv("SMTP_PASSWORD", "")
+    frontend_url = os.getenv("FRONTEND_URL", "https://instant-pdf-neon.vercel.app")
+    
+    if smtp_email and smtp_password:
+        try:
+            # Create reset link
+            reset_link = f"{frontend_url}/reset-password?token={reset_token}"
+            
+            # Create email
+            msg = MIMEMultipart()
+            msg['From'] = smtp_email
+            msg['To'] = user.email
+            msg['Subject'] = "InstantPDF - Reset Your Password"
+            
+            body = f"""
+            <html>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background: linear-gradient(135deg, #ef4444, #f97316); padding: 30px; text-align: center;">
+                    <h1 style="color: white; margin: 0;">InstantPDF</h1>
+                </div>
+                <div style="padding: 30px; background: #f9fafb;">
+                    <h2 style="color: #1f2937;">Reset Your Password</h2>
+                    <p style="color: #4b5563;">Hi {user.name},</p>
+                    <p style="color: #4b5563;">We received a request to reset your password. Click the button below to create a new password:</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="{reset_link}" style="background: linear-gradient(135deg, #ef4444, #f97316); color: white; padding: 15px 30px; text-decoration: none; border-radius: 30px; font-weight: bold;">Reset Password</a>
+                    </div>
+                    <p style="color: #6b7280; font-size: 14px;">This link will expire in 1 hour.</p>
+                    <p style="color: #6b7280; font-size: 14px;">If you didn't request this, you can safely ignore this email.</p>
+                </div>
+            </body>
+            </html>
+            """
+            
+            msg.attach(MIMEText(body, 'html'))
+            
+            # Send email via Gmail SMTP
+            server = smtplib.SMTP('smtp.gmail.com', 587)
+            server.starttls()
+            server.login(smtp_email, smtp_password)
+            server.sendmail(smtp_email, user.email, msg.as_string())
+            server.quit()
+            
+        except Exception as e:
+            print(f"Email sending failed: {e}")
+            # Still return success to prevent enumeration
+    
+    return {"message": "If an account with that email exists, a reset link has been sent."}
+
+@app.post("/auth/reset-password")
+async def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db)):
+    """Reset user password with valid token"""
+    from auth import verify_token
+    
+    # Verify token
+    payload = verify_token(request.token)
+    if not payload or payload.get("type") != "reset":
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+    
+    email = payload.get("sub")
+    user = db.query(User).filter(User.email == email).first()
+    
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+    
+    # Update password
+    user.hashed_password = get_password_hash(request.new_password)
+    db.commit()
+    
+    return {"message": "Password reset successfully. You can now login with your new password."}
 
 @app.post("/convert/docx")
 async def convert_docx(background_tasks: BackgroundTasks, file: UploadFile = File(...)):

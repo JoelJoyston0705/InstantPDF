@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { X, Mail, Lock, User, CheckCircle } from 'lucide-react';
+import { X, Mail, Lock, User, CheckCircle, ArrowLeft } from 'lucide-react';
 
 export default function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
-    const [mode, setMode] = useState(initialMode); // 'login' or 'signup'
+    const [mode, setMode] = useState(initialMode); // 'login', 'signup', or 'forgot'
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -11,6 +11,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
 
     const handleChange = (e) => {
         setFormData({
@@ -26,12 +27,17 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
         setError('');
 
         try {
-            const endpoint = mode === 'login' ? '/auth/login' : '/auth/signup';
-            const payload = mode === 'login'
-                ? { email: formData.email, password: formData.password }
-                : formData;
+            let endpoint = '/auth/login';
+            let payload = { email: formData.email, password: formData.password };
 
-            // Use Env Var OR fallback to Railway Production URL (Safety Net)
+            if (mode === 'signup') {
+                endpoint = '/auth/signup';
+                payload = formData;
+            } else if (mode === 'forgot') {
+                endpoint = '/auth/forgot-password';
+                payload = { email: formData.email };
+            }
+
             const API_URL = import.meta.env.VITE_API_URL || 'https://instantpdf-production.up.railway.app';
             const response = await fetch(`${API_URL}${endpoint}`, {
                 method: 'POST',
@@ -44,24 +50,37 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.detail || 'Authentication failed');
+                throw new Error(data.detail || 'Request failed');
             }
 
-            // Store token
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
+            if (mode === 'forgot') {
+                setSuccess(true);
+                setSuccessMessage('Check your email for a password reset link.');
+            } else {
+                // Store token for login/signup
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
 
-            setSuccess(true);
-            setTimeout(() => {
-                onClose();
-                window.location.reload(); // Refresh to update auth state
-            }, 1500);
+                setSuccess(true);
+                setSuccessMessage(mode === 'signup' ? 'Your account has been created successfully.' : 'You have been logged in successfully.');
+                setTimeout(() => {
+                    onClose();
+                    window.location.reload();
+                }, 1500);
+            }
 
         } catch (err) {
             setError(err.message);
         } finally {
             setLoading(false);
         }
+    };
+
+    const resetForm = () => {
+        setFormData({ name: '', email: '', password: '' });
+        setError('');
+        setSuccess(false);
+        setSuccessMessage('');
     };
 
     if (!isOpen) return null;
@@ -91,13 +110,19 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
                             <CheckCircle size={40} className="text-white" strokeWidth={2} />
                         </div>
                         <h2 className="text-3xl font-semibold mb-3" style={{ letterSpacing: '-0.022em' }}>
-                            {mode === 'signup' ? 'Welcome!' : 'Welcome Back!'}
+                            {mode === 'forgot' ? 'Email Sent!' : mode === 'signup' ? 'Welcome!' : 'Welcome Back!'}
                         </h2>
                         <p className="text-gray-500">
-                            {mode === 'signup'
-                                ? 'Your account has been created successfully.'
-                                : 'You have been logged in successfully.'}
+                            {successMessage}
                         </p>
+                        {mode === 'forgot' && (
+                            <button
+                                onClick={() => { resetForm(); setMode('login'); }}
+                                className="mt-6 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                            >
+                                Back to Login
+                            </button>
+                        )}
                     </div>
                 ) : (
                     <div className="p-8">
@@ -109,42 +134,56 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
                                 className="w-16 h-16 mx-auto mb-4"
                             />
                             <h2 className="text-3xl font-semibold mb-2" style={{ letterSpacing: '-0.022em' }}>
-                                {mode === 'login' ? 'Welcome Back' : 'Create Account'}
+                                {mode === 'forgot' ? 'Reset Password' : mode === 'login' ? 'Welcome Back' : 'Create Account'}
                             </h2>
                             <p className="text-gray-500">
-                                {mode === 'login'
-                                    ? 'Sign in to your account'
-                                    : 'Start converting documents for free'}
+                                {mode === 'forgot'
+                                    ? 'Enter your email to receive a reset link'
+                                    : mode === 'login'
+                                        ? 'Sign in to your account'
+                                        : 'Start converting documents for free'}
                             </p>
                         </div>
 
-                        {/* Tab Switcher */}
-                        <div className="flex bg-gray-100 rounded-2xl p-1 mb-8">
+                        {/* Tab Switcher (hidden in forgot mode) */}
+                        {mode !== 'forgot' && (
+                            <div className="flex bg-gray-100 rounded-2xl p-1 mb-8">
+                                <button
+                                    onClick={() => {
+                                        setMode('login');
+                                        setError('');
+                                    }}
+                                    className={`flex-1 py-3 rounded-xl font-medium transition-all ${mode === 'login'
+                                        ? 'bg-white text-gray-900 shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                >
+                                    Login
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setMode('signup');
+                                        setError('');
+                                    }}
+                                    className={`flex-1 py-3 rounded-xl font-medium transition-all ${mode === 'signup'
+                                        ? 'bg-white text-gray-900 shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                >
+                                    Sign Up
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Back button for forgot mode */}
+                        {mode === 'forgot' && (
                             <button
-                                onClick={() => {
-                                    setMode('login');
-                                    setError('');
-                                }}
-                                className={`flex-1 py-3 rounded-xl font-medium transition-all ${mode === 'login'
-                                    ? 'bg-white text-gray-900 shadow-sm'
-                                    : 'text-gray-500 hover:text-gray-700'
-                                    }`}
+                                onClick={() => { setMode('login'); setError(''); }}
+                                className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-6 text-sm"
                             >
-                                Login
+                                <ArrowLeft size={16} /> Back to Login
                             </button>
-                            <button
-                                onClick={() => {
-                                    setMode('signup');
-                                    setError('');
-                                }}
-                                className={`flex-1 py-3 rounded-xl font-medium transition-all ${mode === 'signup'
-                                    ? 'bg-white text-gray-900 shadow-sm'
-                                    : 'text-gray-500 hover:text-gray-700'
-                                    }`}
-                            >
-                                Sign Up
-                            </button>
-                        </div>
+                        )}
 
                         {/* Form */}
                         <form onSubmit={handleSubmit} className="space-y-4">
@@ -186,24 +225,26 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Password
-                                </label>
-                                <div className="relative">
-                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                                    <input
-                                        type="password"
-                                        name="password"
-                                        value={formData.password}
-                                        onChange={handleChange}
-                                        placeholder="••••••••"
-                                        required
-                                        minLength={6}
-                                        className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
-                                    />
+                            {mode !== 'forgot' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Password
+                                    </label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                                        <input
+                                            type="password"
+                                            name="password"
+                                            value={formData.password}
+                                            onChange={handleChange}
+                                            placeholder="••••••••"
+                                            required
+                                            minLength={6}
+                                            className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
                             {error && (
                                 <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">
@@ -219,14 +260,17 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
                                 {loading ? (
                                     <div className="spinner mx-auto" style={{ width: '20px', height: '20px', borderWidth: '2px' }}></div>
                                 ) : (
-                                    mode === 'login' ? 'Sign In' : 'Create Account'
+                                    mode === 'forgot' ? 'Send Reset Link' : mode === 'login' ? 'Sign In' : 'Create Account'
                                 )}
                             </button>
                         </form>
 
                         {mode === 'login' && (
                             <div className="mt-6 text-center">
-                                <button className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                                <button
+                                    onClick={() => { setMode('forgot'); setError(''); }}
+                                    className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                                >
                                     Forgot password?
                                 </button>
                             </div>
