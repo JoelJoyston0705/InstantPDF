@@ -174,23 +174,23 @@ function Home() {
       </div>
 
       {/* About Section */}
-      <div id="about" className="py-20 px-6 bg-white">
+      <div id="about" className="py-20 px-6 bg-white dark:bg-gray-900">
         <div className="container mx-auto max-w-4xl text-center">
           <h2 className="text-4xl font-semibold mb-6 animate-fade-in-up" style={{ letterSpacing: '-0.022em' }}>
             About InstantPDF
           </h2>
-          <div className="space-y-6 text-gray-600 text-lg leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+          <div className="space-y-6 text-gray-600 dark:text-gray-400 text-lg leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
             <p>
-              InstantPDF is a modern, free, and secure platform for all your PDF conversion and editing needs.
-              Built with cutting-edge technology and designed with Apple's minimalist philosophy in mind.
+              InstantPDF is a simple, fast PDF toolkit designed to convert your documents without sign-ups, ads, or watermarks.
             </p>
             <p>
-              We believe document conversion should be fast, simple, and accessible to everyone.
-              That's why we've created a comprehensive suite of 14 professional tools, all completely free.
+              The goal is to provide reliable everyday tools for students, job seekers, and professionals who just need their files converted and ready to share.
             </p>
             <p>
-              Your privacy is our priority. All files are automatically deleted from our servers immediately after processing,
-              and we never store, analyze, or share your data with third parties.
+              All processing happens quickly in your browser or on secure servers, and files are not kept longer than necessary to complete the conversion.
+            </p>
+            <p>
+              InstantPDF is an independent project that will keep evolving based on real user feedback, with new tools and improvements shipped continuously.
             </p>
             <div className="pt-8">
               <a href="#tools" className="btn-primary inline-block">
