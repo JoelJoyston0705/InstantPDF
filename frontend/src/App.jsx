@@ -5,7 +5,7 @@ import Navbar from './components/Navbar';
 import ToolPage from './components/ToolPage';
 
 import CookieConsent from './components/CookieConsent';
-import BatchUpload from './components/BatchUpload';
+
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
 
@@ -330,17 +330,6 @@ function App() {
             }
           />
 
-
-          {/* Batch Processing Routes */}
-          <Route path="/batch/word-to-pdf" element={<BatchUpload title="Batch Convert Word to PDF" endpoint="/convert/docx" accept=".doc,.docx" />} />
-          <Route path="/batch/excel-to-pdf" element={<BatchUpload title="Batch Convert Excel to PDF" endpoint="/convert/xlsx" accept=".xlsx,.xls" />} />
-          <Route path="/batch/ppt-to-pdf" element={<BatchUpload title="Batch Convert PowerPoint to PDF" endpoint="/convert/pptx" accept=".ppt,.pptx" />} />
-          <Route path="/batch/image-to-pdf" element={<BatchUpload title="Batch Convert Images to PDF" endpoint="/convert/image" accept=".jpg,.jpeg,.png" />} />
-          <Route path="/batch/html-to-pdf" element={<BatchUpload title="Batch Convert HTML to PDF" endpoint="/convert/html" accept=".html" />} />
-          <Route path="/batch/pdf-to-word" element={<BatchUpload title="Batch Convert PDF to Word" endpoint="/convert/pdf-to-word" accept=".pdf" />} />
-          <Route path="/batch/pdf-to-excel" element={<BatchUpload title="Batch Convert PDF to Excel" endpoint="/convert/pdf-to-excel" accept=".pdf" />} />
-          <Route path="/batch/pdf-to-jpg" element={<BatchUpload title="Batch Convert PDF to JPG" endpoint="/convert/pdf-to-jpg" accept=".pdf" />} />
-          <Route path="/batch/pdf-to-ppt" element={<BatchUpload title="Batch Convert PDF to PowerPoint" endpoint="/convert/pdf-to-pptx" accept=".pdf" />} />
 
 
           {/* Legal Pages */}
