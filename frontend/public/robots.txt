@@ -1,9 +1,11 @@
+# InstantPDF Robots.txt
 # Allow all search engines
+
 User-agent: *
 Allow: /
 
-# Don't index API calls
-Disallow: /api/
-
 # Sitemap location
-Sitemap: https://your-app.vercel.app/sitemap.xml
+Sitemap: https://instant-pdf-neon.vercel.app/sitemap.xml
+
+# Crawl-delay (optional, be nice to crawlers)
+Crawl-delay: 1
