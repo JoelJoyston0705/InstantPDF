@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Upload, File, CheckCircle, AlertCircle, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import Confetti from './Confetti';
+
 
 export default function ToolPage({ title, description, endpoint, accept, icon: Icon }) {
     const [file, setFile] = useState(null);
@@ -9,7 +9,7 @@ export default function ToolPage({ title, description, endpoint, accept, icon: I
     const [downloadUrl, setDownloadUrl] = useState(null);
     const [error, setError] = useState(null);
     const [isDragging, setIsDragging] = useState(false);
-    const [showConfetti, setShowConfetti] = useState(false);
+
 
     const handleFileChange = (e) => {
         if (e.target.files && e.target.files[0]) {
@@ -64,7 +64,7 @@ export default function ToolPage({ title, description, endpoint, accept, icon: I
             const url = window.URL.createObjectURL(blob);
             setDownloadUrl(url);
             setStatus('done');
-            setShowConfetti(true); // 🎉 Trigger confetti!
+
         } catch (err) {
             console.error("ToolPage Error:", err);
 
@@ -215,8 +215,6 @@ export default function ToolPage({ title, description, endpoint, accept, icon: I
                 </div>
             </div>
 
-            {/* Confetti Animation */}
-            <Confetti trigger={showConfetti} />
         </div>
     );
 }
