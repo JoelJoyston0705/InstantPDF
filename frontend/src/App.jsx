@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { FileText, FileSpreadsheet, Image as ImageIcon, Heart, Shield, Zap, Presentation, Code, ArrowRight, RotateCw, Type, Hash, Crop } from 'lucide-react';
+import { FileText, FileSpreadsheet, Image as ImageIcon, Heart, Shield, Zap, Presentation, Code, ArrowRight } from 'lucide-react';
 import Navbar from './components/Navbar';
 import ToolPage from './components/ToolPage';
 
