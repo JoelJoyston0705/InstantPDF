@@ -121,7 +121,7 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
 
 @app.post("/auth/forgot-password")
 async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
-    """Send password reset email to user"""
+    """Send password reset email to user via Gmail SMTP"""
     import smtplib
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
@@ -145,10 +145,8 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
     
     if smtp_email and smtp_password:
         try:
-            # Create reset link
             reset_link = f"{frontend_url}/reset-password?token={reset_token}"
             
-            # Create email
             msg = MIMEMultipart()
             msg['From'] = smtp_email
             msg['To'] = user.email
@@ -176,7 +174,6 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
             
             msg.attach(MIMEText(body, 'html'))
             
-            # Send email via Gmail SMTP
             server = smtplib.SMTP('smtp.gmail.com', 587)
             server.starttls()
             server.login(smtp_email, smtp_password)
@@ -185,7 +182,6 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
             
         except Exception as e:
             print(f"Email sending failed: {e}")
-            # Still return success to prevent enumeration
     
     return {"message": "If an account with that email exists, a reset link has been sent."}
 
