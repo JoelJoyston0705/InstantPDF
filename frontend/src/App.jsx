@@ -83,6 +83,11 @@ function Home() {
         {/* Background gradient effect */}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-red-50/30 to-transparent pointer-events-none"></div>
 
+        {/* DEBUG BANNER - REMOVE AFTER VERIFICATION */}
+        <div className="bg-red-600 text-white text-center py-2 px-4 fixed top-0 left-0 right-0 z-50 font-bold">
+          SYSTEM UPDATE: Ver 0.4.0 - IF YOU SEE THIS, CACHE IS CLEARED.
+        </div>
+
         <div className="container mx-auto max-w-5xl text-center relative z-10">
           <div className="animate-fade-in-up">
             <h1 className="mb-6">
