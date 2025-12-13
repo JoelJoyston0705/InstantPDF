@@ -5,6 +5,7 @@
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 ![React](https://img.shields.io/badge/react-19.2-blue)
 ![FastAPI](https://img.shields.io/badge/fastapi-latest-teal)
+![Security](https://img.shields.io/badge/security-policy-brightgreen)
 
 ## 🌟 Executive Summary
 
