@@ -168,19 +168,35 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions for:
 
 ## 🛠️ Environment Variables
 
-### Backend (.env)
-
+### 💻 Local Development - Backend (.env)
 ```env
 SECRET_KEY=your-secret-key
 DATABASE_URL=sqlite:///./instantpdf.db
 CORS_ORIGINS=http://localhost:5173
 ```
 
-### Frontend (.env)
-
+### 💻 Local Development - Frontend (.env)
 ```env
 VITE_API_URL=http://localhost:8000
 ```
+
+### 🚀 Production (.env)
+
+**For Railway Backend:**
+
+```env
+SECRET_KEY=<generate-with-openssl-rand-hex-32>
+DATABASE_URL=sqlite:///./instantpdf.db
+CORS_ORIGINS=https://instant-pdf-neon.vercel.app
+```
+
+**For Vercel Frontend:**
+
+```env
+VITE_API_URL=https://your-backend.railway.app
+```
+
+> **Note**: Replace `your-backend.railway.app` with your actual Railway deployment URL. Set these in your Railway/Vercel dashboard under Environment Variables.
 
 ---
 
