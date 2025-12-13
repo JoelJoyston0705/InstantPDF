@@ -257,7 +257,7 @@ Contributions welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) first.
 ## 🎯 Roadmap
 
 - [ ] PDF Merge & Split
-- [ ] PDF Compression
+- [x] PDF Compression ✅
 - [ ] OCR support
 - [ ] Batch processing
 - [ ] Cloud storage integration
