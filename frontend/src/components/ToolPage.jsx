@@ -171,12 +171,13 @@ export default function ToolPage({ title, description, endpoint, accept, icon: I
                                     <button onClick={handleSubmit} className="btn-primary mb-4">
                                         {
                                             title.startsWith('PDF to') ? `Convert to ${title.replace('PDF to ', '')}` :
-                                                title.startsWith('Edit') ? 'Edit PDF' :
-                                                    title.startsWith('Watermark') ? 'Add Watermark' :
-                                                        title.startsWith('Rotate') ? 'Rotate PDF' :
-                                                            title.startsWith('Crop') ? 'Crop PDF' :
-                                                                title.startsWith('Page') ? 'Add Numbers' :
-                                                                    'Convert to PDF'
+                                                title.startsWith('Compress') ? 'Compress PDF' :
+                                                    title.startsWith('Edit') ? 'Edit PDF' :
+                                                        title.startsWith('Watermark') ? 'Add Watermark' :
+                                                            title.startsWith('Rotate') ? 'Rotate PDF' :
+                                                                title.startsWith('Crop') ? 'Crop PDF' :
+                                                                    title.startsWith('Page') ? 'Add Numbers' :
+                                                                        'Convert to PDF'
                                         }
                                     </button>
                                     <button onClick={() => setFile(null)} className="block mx-auto text-gray-400 hover:text-gray-600 font-medium transition-colors text-sm">
@@ -250,7 +251,8 @@ export default function ToolPage({ title, description, endpoint, accept, icon: I
                                             endpoint.includes('pdf-to-excel') ? `${file.name.split('.')[0]}.xlsx` :
                                                 (endpoint.includes('pdf-to-powerpoint') || endpoint.includes('pdf-to-ppt')) ? `${file.name.split('.')[0]}.pptx` :
                                                     endpoint.includes('pdf-to-jpg') ? `${file.name.split('.')[0]}.jpg` :
-                                                        `${file.name.split('.')[0]}.pdf`
+                                                        endpoint.includes('compress/pdf') ? `${file.name.split('.')[0]}_compressed.pdf` :
+                                                            `${file.name.split('.')[0]}.pdf`
                                     }
                                     className="btn-primary inline-flex items-center justify-center gap-2"
                                 >

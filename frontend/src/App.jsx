@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { FileText, FileSpreadsheet, Image as ImageIcon, Heart, Shield, Zap, Presentation, Code, ArrowRight } from 'lucide-react';
+import { FileText, FileSpreadsheet, Image as ImageIcon, Heart, Shield, Zap, Presentation, Code, ArrowRight, Minimize2 } from 'lucide-react';
 import Navbar from './components/Navbar';
 import ToolPage from './components/ToolPage';
 
@@ -74,6 +74,13 @@ function Home() {
       icon: Presentation,
       path: '/pdf-to-ppt',
       gradient: 'from-yellow-500 to-amber-600'
+    },
+    {
+      title: 'Compress PDF',
+      description: 'Reduce PDF file size while maintaining quality.',
+      icon: Minimize2,
+      path: '/compress-pdf',
+      gradient: 'from-cyan-500 to-blue-600'
     }
   ];
 
@@ -323,6 +330,18 @@ function App() {
                 endpoint="/convert/pdf-to-pptx"
                 accept=".pdf"
                 icon={Presentation}
+              />
+            }
+          />
+          <Route
+            path="/compress-pdf"
+            element={
+              <ToolPage
+                title="Compress PDF"
+                description="Reduce PDF file size while maintaining quality."
+                endpoint="/compress/pdf"
+                accept=".pdf"
+                icon={Minimize2}
               />
             }
           />

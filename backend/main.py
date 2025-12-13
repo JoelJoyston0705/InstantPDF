@@ -10,7 +10,8 @@ from sqlalchemy.orm import Session
 from converter import (
     convert_docx_to_pdf, convert_xlsx_to_pdf, convert_image_to_pdf,
     convert_pptx_to_pdf, convert_html_to_pdf,
-    convert_pdf_to_jpg, convert_pdf_to_docx, convert_pdf_to_xlsx, convert_pdf_to_pptx
+    convert_pdf_to_jpg, convert_pdf_to_docx, convert_pdf_to_xlsx, convert_pdf_to_pptx,
+    compress_pdf
 )
 from database import get_db, User
 from auth import get_password_hash, verify_password, create_access_token
@@ -595,6 +596,49 @@ async def add_text_pdf_endpoint(background_tasks: BackgroundTasks, file: UploadF
         
         from pdf_editor import edit_pdf_add_text
         edit_pdf_add_text(input_path, output_path, text, x, y)
+        
+        background_tasks.add_task(cleanup_files, [input_path, output_path])
+        
+        return FileResponse(
+            output_path, 
+            media_type="application/pdf", 
+            filename=output_filename
+        )
+    except Exception as e:
+        cleanup_files([input_path])
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Compress PDF
+@app.post("/compress/pdf")
+async def compress_pdf_endpoint(
+    background_tasks: BackgroundTasks, 
+    file: UploadFile = File(...),
+    compression_level: str = "medium"
+):
+    """
+    Compress a PDF file to reduce its size.
+    
+    Args:
+        file: The PDF file to compress
+        compression_level: 'low', 'medium', or 'high' compression
+    """
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Invalid file type. Please upload a .pdf file.")
+    
+    # Validate compression level
+    if compression_level not in ['low', 'medium', 'high']:
+        compression_level = 'medium'
+    
+    temp_dir = tempfile.mkdtemp()
+    input_path = os.path.join(temp_dir, file.filename)
+    output_filename = Path(file.filename).stem + "_compressed.pdf"
+    output_path = os.path.join(temp_dir, output_filename)
+
+    try:
+        with open(input_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        compress_pdf(input_path, output_path, compression_level)
         
         background_tasks.add_task(cleanup_files, [input_path, output_path])
         

@@ -391,3 +391,121 @@ def convert_pdf_to_pptx(input_path: str, output_path: str):
     except Exception as e:
         raise RuntimeError(f"PDF to PowerPoint conversion failed: {e}")
 
+
+def compress_pdf(input_path: str, output_path: str, compression_level: str = "medium"):
+    """
+    Compress a PDF file to reduce its size.
+    
+    Args:
+        input_path: Path to the input PDF file
+        output_path: Path to save the compressed PDF
+        compression_level: 'low', 'medium', or 'high' compression
+    """
+    try:
+        import fitz  # PyMuPDF
+        
+        # Open the PDF
+        doc = fitz.open(input_path)
+        
+        # Set compression parameters based on level
+        if compression_level == "low":
+            # Light compression - preserve quality
+            garbage = 1
+            deflate = True
+            image_quality = 95
+        elif compression_level == "high":
+            # Maximum compression - may reduce quality
+            garbage = 4
+            deflate = True
+            image_quality = 60
+        else:  # medium (default)
+            garbage = 3
+            deflate = True
+            image_quality = 80
+        
+        # Process each page to compress images
+        for page_num in range(len(doc)):
+            page = doc[page_num]
+            
+            # Get all images on the page
+            image_list = page.get_images(full=True)
+            
+            for img_index, img in enumerate(image_list):
+                xref = img[0]
+                
+                try:
+                    # Extract the image
+                    base_image = doc.extract_image(xref)
+                    image_bytes = base_image["image"]
+                    image_ext = base_image["ext"]
+                    
+                    # Only compress JPEG and PNG images
+                    if image_ext.lower() in ['jpeg', 'jpg', 'png']:
+                        from PIL import Image
+                        import io
+                        
+                        # Open and compress the image
+                        pil_image = Image.open(io.BytesIO(image_bytes))
+                        
+                        # Convert to RGB if necessary (for JPEG)
+                        if pil_image.mode in ('RGBA', 'P'):
+                            pil_image = pil_image.convert('RGB')
+                        
+                        # Reduce resolution for high compression
+                        if compression_level == "high":
+                            max_size = 1024
+                            if pil_image.width > max_size or pil_image.height > max_size:
+                                ratio = min(max_size / pil_image.width, max_size / pil_image.height)
+                                new_size = (int(pil_image.width * ratio), int(pil_image.height * ratio))
+                                pil_image = pil_image.resize(new_size, Image.LANCZOS)
+                        
+                        # Compress to JPEG
+                        img_buffer = io.BytesIO()
+                        pil_image.save(img_buffer, format='JPEG', quality=image_quality, optimize=True)
+                        compressed_bytes = img_buffer.getvalue()
+                        
+                        # Only replace if the compressed image is smaller
+                        if len(compressed_bytes) < len(image_bytes):
+                            # Update the image in the PDF
+                            page.replace_image(xref, filename=None, stream=compressed_bytes)
+                except Exception as img_error:
+                    # Skip problematic images and continue
+                    print(f"Warning: Could not compress image {img_index} on page {page_num}: {img_error}")
+                    continue
+        
+        # Save with compression options
+        doc.save(
+            output_path,
+            garbage=garbage,
+            deflate=deflate,
+            deflate_images=True,
+            deflate_fonts=True,
+            clean=True
+        )
+        
+        doc.close()
+        
+    except ImportError:
+        # Fallback using pypdf if fitz is not available
+        try:
+            from pypdf import PdfReader, PdfWriter
+            
+            reader = PdfReader(input_path)
+            writer = PdfWriter()
+            
+            for page in reader.pages:
+                page.compress_content_streams()
+                writer.add_page(page)
+            
+            # Remove duplicate objects
+            writer.add_metadata(reader.metadata or {})
+            
+            with open(output_path, 'wb') as output_file:
+                writer.write(output_file)
+                
+        except Exception as e_inner:
+            raise RuntimeError(f"PDF compression failed (fallback): {e_inner}")
+    
+    except Exception as e:
+        raise RuntimeError(f"PDF compression failed: {e}")
+
