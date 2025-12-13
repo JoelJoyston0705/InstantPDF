@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Upload, File, CheckCircle, AlertCircle, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Confetti from './Confetti';
@@ -11,6 +11,32 @@ export default function ToolPage({ title, description, endpoint, accept, icon: I
     const [isDragging, setIsDragging] = useState(false);
     const [progress, setProgress] = useState(0);
     const [showConfetti, setShowConfetti] = useState(false);
+
+    // Dynamic SEO - Update page title and meta description for each tool
+    useEffect(() => {
+        // Set page title
+        const pageTitle = `${title} - Free Online ${title} Converter | InstantPDF`;
+        document.title = pageTitle;
+
+        // Update meta description
+        const metaDescription = document.querySelector('meta[name="description"]');
+        if (metaDescription) {
+            metaDescription.setAttribute('content', `${description} Free, fast, and secure. No sign-ups, no watermarks. Convert your files instantly with InstantPDF.`);
+        }
+
+        // Update canonical URL
+        const canonical = document.querySelector('link[rel="canonical"]');
+        if (canonical) {
+            const path = window.location.pathname;
+            canonical.setAttribute('href', `https://instant-pdf-neon.vercel.app${path}`);
+        }
+
+        // Cleanup: Reset title on unmount
+        return () => {
+            document.title = 'InstantPDF - Free Online PDF Converter | Word to PDF, Excel to PDF, Compress PDF & More';
+        };
+    }, [title, description]);
+
 
     const handleFileChange = (e) => {
         if (e.target.files && e.target.files[0]) {
