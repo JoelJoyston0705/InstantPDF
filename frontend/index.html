@@ -107,6 +107,22 @@
   }
   </script>
 
+  <!-- Structured Data: WebSite (Fixes site name in Google) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "InstantPDF",
+    "alternateName": ["Instant PDF", "InstantPDF Converter"],
+    "url": "https://instant-pdf-neon.vercel.app",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://instant-pdf-neon.vercel.app/?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+
   <!-- Structured Data: FAQPage (Rich Snippets) -->
   <script type="application/ld+json">
   {
