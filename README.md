@@ -8,8 +8,7 @@
 
 ## 🌟 Executive Summary
 
-InstantPDF is a **high-performance, full-stack SaaS application** designed to compete with industry giants like iLovePDF and Smallpdf. It offers **14 professional-grade PDF tools** in a beautiful, modern interface. It handles file conversions, editing, and management with a focus on **speed, privacy, and user experience**.
-
+InstantPDF is a **high-performance, full-stack SaaS application** designed to compete with industry giants like iLovePDF and Smallpdf. It offers **9 professional-grade PDF tools** (with 5 more editing features coming soon) in a beautiful, modern interface. It handles file conversions, editing, and management with a focus on **speed, privacy, and user experience**.
 ---
 
 ## 🛠️ Tech Stack (Modern & Scalable)
@@ -28,8 +27,7 @@ InstantPDF is a **high-performance, full-stack SaaS application** designed to co
 
 ## 🔥 Key Features
 
-### 1. 14 Powerful Tools
-
+### 1. Professional PDF Tools (9 Available + 5 Coming Soon)
 #### Convert TO PDF:
 - 📝 **Word to PDF** - Convert DOCX files
 - 📊 **Excel to PDF** - Transform spreadsheets
@@ -43,8 +41,7 @@ InstantPDF is a **high-performance, full-stack SaaS application** designed to co
 - 🖼️ **PDF to JPG** - High-quality images
 - 📽️ **PDF to PowerPoint** - Editable slides
 
-#### Edit PDFs:
-- 🔄 **Rotate** - Fix page orientation
+#### Edit PDFs (Coming Soon):- 🔄 **Rotate** - Fix page orientation
 - 💧 **Watermark** - Add custom text/images
 - 🔢 **Page Numbers** - Professional pagination
 - ✂️ **Crop** - Trim page margins
