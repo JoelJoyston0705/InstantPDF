@@ -1,10 +1,15 @@
+import os
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-# Secret key for JWT (in production, use environment variable)
-SECRET_KEY = "your-secret-key-change-in-production"
+# Secret key for JWT - MUST be set via environment variable in production
+SECRET_KEY = os.getenv("JWT_SECRET")
+if not SECRET_KEY:
+    import warnings
+    warnings.warn("JWT_SECRET not set! Using insecure default. Set JWT_SECRET env variable in production!")
+    SECRET_KEY = "dev-only-insecure-key-do-not-use-in-production"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 
