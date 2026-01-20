@@ -79,7 +79,7 @@ export default function ToolPage({ title, description, endpoint, accept, icon: I
         formData.append('file', file);
 
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'https://instantpdf-production.up.railway.app';
+            const API_URL = import.meta.env.VITE_API_URL || 'https://instantpdf-a2ew.onrender.com';
 
             // Use XMLHttpRequest for progress tracking
             const xhr = new XMLHttpRequest();

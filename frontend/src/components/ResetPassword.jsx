@@ -29,7 +29,7 @@ export default function ResetPassword() {
         setLoading(true);
 
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'https://instantpdf-production.up.railway.app';
+            const API_URL = import.meta.env.VITE_API_URL || 'https://instantpdf-a2ew.onrender.com';
             const response = await fetch(`${API_URL}/auth/reset-password`, {
                 method: 'POST',
                 headers: {

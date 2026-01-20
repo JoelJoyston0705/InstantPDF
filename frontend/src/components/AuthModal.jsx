@@ -38,7 +38,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
                 payload = { email: formData.email };
             }
 
-            const API_URL = import.meta.env.VITE_API_URL || 'https://instantpdf-production.up.railway.app';
+            const API_URL = import.meta.env.VITE_API_URL || 'https://instantpdf-a2ew.onrender.com';
             const response = await fetch(`${API_URL}${endpoint}`, {
                 method: 'POST',
                 headers: {
