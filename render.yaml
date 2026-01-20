@@ -1,0 +1,25 @@
+# Render Blueprint - Deploy with one click
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: instantpdf-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    region: oregon
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        value: sqlite:///./data/instantpdf.db
+      - key: ALLOWED_ORIGINS
+        value: https://instant-pdf-neon.vercel.app,https://instantpdf.vercel.app
+      - key: FRONTEND_URL
+        value: https://instant-pdf-neon.vercel.app
+      - key: MAX_FILE_SIZE_MB
+        value: "50"
+      - key: FILE_RETENTION_HOURS
+        value: "24"
