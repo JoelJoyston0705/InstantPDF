@@ -5,7 +5,7 @@ User-agent: *
 Allow: /
 
 # Sitemap location
-Sitemap: https://instant-pdf-neon.vercel.app/sitemap.xml
+Sitemap: https://instantpdf.site/sitemap.xml
 
 # Crawl-delay (optional, be nice to crawlers)
 Crawl-delay: 1

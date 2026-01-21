@@ -1,82 +1,81 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://instant-pdf-neon.vercel.app/</loc>
-    <lastmod>2025-01-20</lastmod>
+    <loc>https://instantpdf.site/</loc>
+    <lastmod>2026-01-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://instant-pdf-neon.vercel.app/word-to-pdf</loc>
-    <lastmod>2025-01-20</lastmod>
+    <loc>https://instantpdf.site/word-to-pdf</loc>
+    <lastmod>2026-01-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://instant-pdf-neon.vercel.app/excel-to-pdf</loc>
-    <lastmod>2025-01-20</lastmod>
+    <loc>https://instantpdf.site/excel-to-pdf</loc>
+    <lastmod>2026-01-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://instant-pdf-neon.vercel.app/ppt-to-pdf</loc>
-    <lastmod>2025-01-20</lastmod>
+    <loc>https://instantpdf.site/ppt-to-pdf</loc>
+    <lastmod>2026-01-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://instant-pdf-neon.vercel.app/image-to-pdf</loc>
-    <lastmod>2025-01-20</lastmod>
+    <loc>https://instantpdf.site/image-to-pdf</loc>
+    <lastmod>2026-01-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://instant-pdf-neon.vercel.app/html-to-pdf</loc>
-    <lastmod>2025-01-20</lastmod>
+    <loc>https://instantpdf.site/html-to-pdf</loc>
+    <lastmod>2026-01-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://instant-pdf-neon.vercel.app/pdf-to-word</loc>
-    <lastmod>2025-01-20</lastmod>
+    <loc>https://instantpdf.site/pdf-to-word</loc>
+    <lastmod>2026-01-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://instant-pdf-neon.vercel.app/pdf-to-excel</loc>
-    <lastmod>2025-01-20</lastmod>
+    <loc>https://instantpdf.site/pdf-to-excel</loc>
+    <lastmod>2026-01-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://instant-pdf-neon.vercel.app/pdf-to-jpg</loc>
-    <lastmod>2025-01-20</lastmod>
+    <loc>https://instantpdf.site/pdf-to-jpg</loc>
+    <lastmod>2026-01-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://instant-pdf-neon.vercel.app/pdf-to-ppt</loc>
-    <lastmod>2025-01-20</lastmod>
+    <loc>https://instantpdf.site/pdf-to-ppt</loc>
+    <lastmod>2026-01-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://instant-pdf-neon.vercel.app/compress-pdf</loc>
-    <lastmod>2025-01-20</lastmod>
+    <loc>https://instantpdf.site/compress-pdf</loc>
+    <lastmod>2026-01-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://instant-pdf-neon.vercel.app/privacy</loc>
-    <lastmod>2025-01-20</lastmod>
+    <loc>https://instantpdf.site/privacy</loc>
+    <lastmod>2026-01-21</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://instant-pdf-neon.vercel.app/terms</loc>
-    <lastmod>2025-01-20</lastmod>
+    <loc>https://instantpdf.site/terms</loc>
+    <lastmod>2026-01-21</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
 </urlset>
-
