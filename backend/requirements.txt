@@ -20,3 +20,4 @@ pikepdf
 pymupdf
 weasyprint
 pdf2docx
+httpx

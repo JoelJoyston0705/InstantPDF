@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Upload, File, CheckCircle, AlertCircle, Download } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Upload, File, CheckCircle, AlertCircle, Download, Wifi } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Confetti from './Confetti';
 
@@ -11,6 +11,35 @@ export default function ToolPage({ title, description, endpoint, accept, icon: I
     const [isDragging, setIsDragging] = useState(false);
     const [progress, setProgress] = useState(0);
     const [showConfetti, setShowConfetti] = useState(false);
+    const [serverStatus, setServerStatus] = useState('unknown'); // unknown, waking, ready
+
+    const API_URL = import.meta.env.VITE_API_URL || 'https://instantpdf-a2ew.onrender.com';
+
+    // ── Server warm-up check on mount ────────────────────────────────────────
+    useEffect(() => {
+        let cancelled = false;
+        const checkServer = async () => {
+            try {
+                const res = await fetch(`${API_URL}/ping`, { signal: AbortSignal.timeout(5000) });
+                if (!cancelled) setServerStatus(res.ok ? 'ready' : 'waking');
+            } catch {
+                if (!cancelled) setServerStatus('waking');
+                // Retry once after 15s — Render typically wakes within 30-60s
+                setTimeout(async () => {
+                    if (cancelled) return;
+                    try {
+                        const res = await fetch(`${API_URL}/ping`, { signal: AbortSignal.timeout(10000) });
+                        if (!cancelled) setServerStatus(res.ok ? 'ready' : 'waking');
+                    } catch {
+                        if (!cancelled) setServerStatus('waking'); // will show banner
+                    }
+                }, 15000);
+            }
+        };
+        checkServer();
+        return () => { cancelled = true; };
+    }, [API_URL]);
+    // ─────────────────────────────────────────────────────────────────────────
 
     // Dynamic SEO - Update page title and meta description for each tool
     useEffect(() => {
@@ -28,7 +57,7 @@ export default function ToolPage({ title, description, endpoint, accept, icon: I
         const canonical = document.querySelector('link[rel="canonical"]');
         if (canonical) {
             const path = window.location.pathname;
-            canonical.setAttribute('href', `https://instant-pdf-neon.vercel.app${path}`);
+            canonical.setAttribute('href', `https://instantpdf.site${path}`);
         }
 
         // Cleanup: Reset title on unmount
@@ -36,6 +65,7 @@ export default function ToolPage({ title, description, endpoint, accept, icon: I
             document.title = 'InstantPDF - Free Online PDF Converter | Word to PDF, Excel to PDF, Compress PDF & More';
         };
     }, [title, description]);
+
 
 
     const handleFileChange = (e) => {
@@ -78,77 +108,74 @@ export default function ToolPage({ title, description, endpoint, accept, icon: I
         const formData = new FormData();
         formData.append('file', file);
 
-        try {
-            const API_URL = import.meta.env.VITE_API_URL || 'https://instantpdf-a2ew.onrender.com';
-
-            // Use XMLHttpRequest for progress tracking
+        // Retry helper — handles cold-start timeouts gracefully
+        const attemptConversion = (attempt = 1) => new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
 
-            const promise = new Promise((resolve, reject) => {
-                xhr.upload.addEventListener('progress', (event) => {
-                    if (event.lengthComputable) {
-                        // Upload progress (0-50%)
-                        const uploadProgress = Math.round((event.loaded / event.total) * 50);
-                        setProgress(uploadProgress);
-                    }
-                });
+            xhr.upload.addEventListener('progress', (event) => {
+                if (event.lengthComputable) {
+                    const uploadProgress = Math.round((event.loaded / event.total) * 50);
+                    setProgress(uploadProgress);
+                }
+            });
 
-                xhr.addEventListener('load', () => {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        resolve(xhr.response);
-                    } else {
-                        try {
-                            const errData = JSON.parse(xhr.responseText);
-                            reject(new Error(errData.detail || 'Conversion failed'));
-                        } catch {
-                            reject(new Error('Conversion failed'));
-                        }
+            xhr.addEventListener('load', () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    resolve(xhr.response);
+                } else {
+                    try {
+                        const errData = JSON.parse(xhr.responseText);
+                        reject(new Error(errData.detail || 'Conversion failed'));
+                    } catch {
+                        reject(new Error('Conversion failed'));
                     }
-                });
+                }
+            });
 
-                xhr.addEventListener('error', () => {
+            xhr.addEventListener('error', async () => {
+                if (attempt < 2) {
+                    // Server may be cold-starting — wait 5s and retry once
+                    setServerStatus('waking');
+                    await new Promise(r => setTimeout(r, 5000));
+                    setProgress(0);
+                    attemptConversion(attempt + 1).then(resolve).catch(reject);
+                } else {
                     reject(new Error('Network error. Please try again.'));
-                });
+                }
+            });
 
-                xhr.addEventListener('loadstart', () => {
-                    // Simulate processing progress (50-90%)
-                    let processingProgress = 50;
-                    const interval = setInterval(() => {
-                        if (processingProgress < 90) {
-                            processingProgress += Math.random() * 10;
-                            setProgress(Math.min(Math.round(processingProgress), 90));
-                        }
-                    }, 300);
-
-                    xhr.addEventListener('load', () => clearInterval(interval));
-                    xhr.addEventListener('error', () => clearInterval(interval));
-                });
+            xhr.addEventListener('loadstart', () => {
+                // Simulate processing progress (50-90%)
+                let processingProgress = 50;
+                const interval = setInterval(() => {
+                    if (processingProgress < 90) {
+                        processingProgress += Math.random() * 10;
+                        setProgress(Math.min(Math.round(processingProgress), 90));
+                    }
+                }, 300);
+                xhr.addEventListener('load', () => clearInterval(interval));
+                xhr.addEventListener('error', () => clearInterval(interval));
             });
 
             xhr.open('POST', `${API_URL}${endpoint}?t=${Date.now()}`);
             xhr.responseType = 'blob';
             xhr.send(formData);
+        });
 
-            const blob = await promise;
+        try {
+
+            const blob = await attemptConversion();
             setProgress(100);
+            setServerStatus('ready');
 
             const url = window.URL.createObjectURL(blob);
             setDownloadUrl(url);
             setStatus('done');
-            setShowConfetti(true); // 🎉 Trigger confetti!
+            setShowConfetti(true);
 
         } catch (err) {
-            console.error("ToolPage Error:", err);
-
-            if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
-                if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.getRegistrations().then(registrations => {
-                        for (let registration of registrations) { registration.unregister(); }
-                    });
-                }
-            }
-
-            setError(err.message === 'Failed to fetch' ? "Network error. Please try again." : err.message);
+            console.error('ToolPage Error:', err);
+            setError(err.message === 'Failed to fetch' ? 'Network error. Please try again.' : err.message);
             setStatus('error');
         }
     };
@@ -156,6 +183,15 @@ export default function ToolPage({ title, description, endpoint, accept, icon: I
     return (
         <div className="min-h-screen pt-24 pb-16 px-6 page-transition">
             <div className="max-w-3xl mx-auto">
+
+                {/* Server warm-up banner */}
+                {serverStatus === 'waking' && (
+                    <div className="mb-6 flex items-center gap-3 px-5 py-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-sm animate-fade-in-up">
+                        <Wifi size={18} className="shrink-0 animate-pulse" />
+                        <span><strong>Server is waking up</strong> — this takes ~30 seconds on first use. Your conversion will start automatically once it's ready. ☕</span>
+                    </div>
+                )}
+
                 {/* Header */}
                 <div className="text-center mb-16 animate-fade-in-up">
                     <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-red-500 to-pink-600 shadow-2xl mb-8 text-white transform hover:scale-110 transition-transform">

@@ -1,10 +1,13 @@
 import os
 import shutil
 import tempfile
+import asyncio
+import httpx
 from pathlib import Path
 from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks, Depends
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 from converter import (
@@ -17,7 +20,35 @@ from database import get_db, User
 from auth import get_password_hash, verify_password, create_access_token
 from datetime import timedelta
 
-app = FastAPI(title="InstantPDF API")
+# ── Keep-alive: prevents Render free tier from sleeping ──────────────────────
+SELF_PING_INTERVAL = 10 * 60  # 10 minutes in seconds
+
+async def _keep_alive_loop():
+    """Pings this server every 10 minutes so Render never idles it out."""
+    await asyncio.sleep(30)  # wait for startup to settle
+    self_url = os.getenv("SELF_URL", "").rstrip("/")
+    if not self_url:
+        print("[keep-alive] SELF_URL not set — skipping self-ping loop.")
+        return
+    print(f"[keep-alive] Starting ping loop → {self_url}/ping every {SELF_PING_INTERVAL}s")
+    async with httpx.AsyncClient(timeout=10) as client:
+        while True:
+            try:
+                r = await client.get(f"{self_url}/ping")
+                print(f"[keep-alive] ping → {r.status_code}")
+            except Exception as e:
+                print(f"[keep-alive] ping failed: {e}")
+            await asyncio.sleep(SELF_PING_INTERVAL)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Run keep-alive background task on startup."""
+    task = asyncio.create_task(_keep_alive_loop())
+    yield
+    task.cancel()
+# ─────────────────────────────────────────────────────────────────────────────
+
+app = FastAPI(title="InstantPDF API", lifespan=lifespan)
 
 # Allow CORS for frontend
 origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
@@ -64,6 +95,11 @@ def cleanup_files(paths: list[str]):
 @app.get("/")
 def read_root():
     return {"message": "InstantPDF API is running"}
+
+@app.get("/ping")
+def ping():
+    """Lightweight health-check endpoint used by keep-alive loop."""
+    return JSONResponse({"status": "ok"})
 
 # Authentication Endpoints
 @app.post("/auth/signup")
